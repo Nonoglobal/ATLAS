@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Documents collection - users can only access their own documents
+    match /documents/{docId} {
+      // Allow read if user owns the document
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Allow create if user is authenticated and sets their own userId
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Allow update/delete if user owns the document
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Users collection (for future user profiles)
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Folders collection
+    match /folders/{folderId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+  }
+}
