@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS // ARTICLE VIEWER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 1px solid #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: none;
+            border: 1px solid #333;
+            color: #666;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .header-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .category-badge {
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #888;
+        }
+
+        .category-badge.breaking {
+            background: rgba(255, 50, 50, 0.3);
+            color: #ff5555;
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .datetime {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: #444;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 50px);
+            margin-top: 50px;
+        }
+
+        .reader-container {
+            flex: 1;
+            background: #0a0a0a;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .reader-container::-webkit-scrollbar { width: 8px; }
+        .reader-container::-webkit-scrollbar-track { background: #0a0a0a; }
+        .reader-container::-webkit-scrollbar-thumb { background: #222; }
+
+        .reader-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .reader-loading.hidden { display: none; }
+
+        .loading-globe {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #1a1a1a;
+            border-radius: 50%;
+            position: relative;
+            margin-bottom: 30px;
+            animation: rotate-globe 3s linear infinite;
+        }
+
+        .loading-globe::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -10%;
+            right: -10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #333, transparent);
+        }
+
+        @keyframes rotate-globe {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        .loading-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
+
+        .loading-status {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 30px;
+            min-height: 20px;
+        }
+
+        .scraper-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 300px;
+        }
+
+        .scraper-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a1a;
+            transition: all 0.3s;
+        }
+
+        .scraper-item.active {
+            border-color: #444;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .scraper-item.success {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .scraper-item.failed {
+            border-color: #333;
+            opacity: 0.5;
+        }
+
+        .scraper-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .scraper-icon.loading { animation: spin 1s linear infinite; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .scraper-info { flex: 1; }
+
+        .scraper-name {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        .scraper-status {
+            font-size: 9px;
+            color: #444;
+            margin-top: 2px;
+        }
+
+        .scraper-item.active .scraper-status { color: #888; }
+        .scraper-item.success .scraper-status { color: #4ade80; }
+
+        .article-wrapper {
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            display: none;
+        }
+
+        .article-wrapper.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .article-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .source-icon {
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .source-info { flex: 1; }
+
+        .source-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+
+        .source-domain {
+            font-size: 10px;
+            color: #666;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .source-link {
+            padding: 8px 16px;
+            background: #fff;
+            color: #000;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 2px;
+            transition: background 0.3s;
+        }
+
+        .source-link:hover { background: #ccc; }
+
+        .article-title {
+            font-family: 'Merriweather', serif;
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.3;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .article-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            margin-bottom: 30px;
+            border: 1px solid #1a1a1a;
+        }
+
+        .article-content {
+            font-family: 'Merriweather', serif;
+            font-size: 17px;
+            line-height: 1.9;
+            color: #ccc;
+        }
+
+        .article-content p { margin-bottom: 25px; }
+
+        .article-content h2, .article-content h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            margin: 40px 0 20px;
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        .reader-error {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .reader-error.show { display: flex; }
+
+        .error-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .error-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+
+        .error-text {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .open-external-btn {
+            padding: 15px 30px;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .open-external-btn:hover { background: #ccc; }
+
+        .globe-container {
+            width: 420px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            border-left: 1px solid #1a1a1a;
+        }
+
+        #globe-canvas { width: 100%; height: 100%; }
+
+        .globe-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .globe-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .globe-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .globe-stat {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #1a1a1a;
+            padding: 10px;
+        }
+
+        .globe-stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .globe-stat-label {
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: #444;
+            margin-top: 3px;
+        }
+
+        .country-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #1a1a1a;
+            padding: 15px;
+            z-index: 100;
+        }
+
+        .country-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        .country-region {
+            font-size: 10px;
+            color: #666;
+            letter-spacing: 2px;
+        }
+
+        .satellite-info {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+
+        .satellite-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 9px;
+            color: #444;
+        }
+
+        .satellite-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            height: 2px;
+            background: #fff;
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s;
+        }
+
+        .scraper-method {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            font-size: 8px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <header class="header">
+        <div class="header-left">
+            <a href="index.html" class="back-btn">← ZURÜCK</a>
+            <div class="header-title">ATLAS READER</div>
+        </div>
+        <div class="header-right">
+            <div class="category-badge" id="categoryBadge">-</div>
+            <div class="datetime" id="datetime"></div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="reader-container" id="readerContainer">
+            <div class="reader-loading" id="readerLoading">
+                <div class="loading-globe"></div>
+                <div class="loading-title">EXTRACTING ARTICLE</div>
+                <div class="loading-status" id="loadingStatus">Initialisiere Scraper...</div>
+                
+                <div class="scraper-list" id="scraperList">
+                    <div class="scraper-item" data-scraper="allorigins">
+                        <div class="scraper-icon" id="icon-allorigins">⏳</div>
+                        <div class="scraper-info">
+                            <div class="scraper-name">ALLORIGINS PROXY</div>
+                            <div class="scraper-status" id="status-allorigins">Wartend...</div>
+                        </div>
+                    </div>
+                    <div class="scraper-item" data-scraper="corsproxy">
+                        <div class="scraper-icon" id="icon-corsproxy">⏳</div>
+                        <div class="scraper-info">
+                            <div class="scraper-name">CORS PROXY</div>
+                            <div class="scraper-status" id="status-corsproxy">Wartend...</div>
+                        </div>
+                    </div>
+                    <div class="scraper-item" data-scraper="codetabs">
+                        <div class="scraper-icon" id="icon-codetabs">⏳</div>
+                        <div class="scraper-info">
+                            <div class="scraper-name">CODETABS PROXY</div>
+                            <div class="scraper-status" id="status-codetabs">Wartend...</div>
+                        </div>
+                    </div>
+                    <div class="scraper-item" data-scraper="thingproxy">
+                        <div class="scraper-icon" id="icon-thingproxy">⏳</div>
+                        <div class="scraper-info">
+                            <div class="scraper-name">THINGPROXY</div>
+                            <div class="scraper-status" id="status-thingproxy">Wartend...</div>
+                        </div>
+                    </div>
+                    <div class="scraper-item" data-scraper="jsonlink">
+                        <div class="scraper-icon" id="icon-jsonlink">⏳</div>
+                        <div class="scraper-info">
+                            <div class="scraper-name">JSONLINK API</div>
+                            <div class="scraper-status" id="status-jsonlink">Wartend...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reader-error" id="readerError">
+                <div class="error-icon">📡</div>
+                <div class="error-title">ARTIKEL NICHT EXTRAHIERBAR</div>
+                <div class="error-text">
+                    Alle Scraper haben fehlgeschlagen.<br>
+                    Die Quelle blockiert externe Zugriffe.<br>
+                    Klicke unten um den Artikel direkt zu öffnen.
+                </div>
+                <button class="open-external-btn" id="openExternalBtn">ORIGINAL ÖFFNEN →</button>
+            </div>
+
+            <div class="article-wrapper" id="articleWrapper">
+                <div class="article-source">
+                    <div class="source-icon">📰</div>
+                    <div class="source-info">
+                        <div class="source-name" id="sourceName">-</div>
+                        <div class="source-domain" id="sourceDomain">-</div>
+                    </div>
+                    <a href="#" class="source-link" id="sourceLink" target="_blank">ORIGINAL →</a>
+                </div>
+
+                <h1 class="article-title" id="articleTitle">-</h1>
+                
+                <div class="article-meta">
+                    <span id="articleDate">📅 -</span>
+                    <span id="articleReadTime">⏱ - min</span>
+                    <span id="articleCountryMeta">🌍 -</span>
+                    <span class="scraper-method" id="scraperMethod">-</span>
+                </div>
+
+                <img class="article-image" id="articleImage" style="display: none;">
+                <div class="article-content" id="articleContent"></div>
+            </div>
+        </div>
+
+        <div class="globe-container">
+            <canvas id="globe-canvas"></canvas>
+            
+            <div class="globe-info">
+                <div class="globe-title">GLOBAL MONITORING</div>
+                <div class="globe-stats">
+                    <div class="globe-stat">
+                        <div class="globe-stat-value" id="utcTime">00:00:00</div>
+                        <div class="globe-stat-label">UTC TIME</div>
+                    </div>
+                    <div class="globe-stat">
+                        <div class="globe-stat-value" id="localTime">00:00:00</div>
+                        <div class="globe-stat-label">LOCAL TIME</div>
+                    </div>
+                    <div class="globe-stat">
+                        <div class="globe-stat-value" id="sunPosition">-</div>
+                        <div class="globe-stat-label">SUN POSITION</div>
+                    </div>
+                    <div class="globe-stat">
+                        <div class="globe-stat-value" id="activeSats">47</div>
+                        <div class="globe-stat-label">ACTIVE SATS</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="country-info">
+                <div class="country-name" id="countryName">-</div>
+                <div class="country-region" id="countryRegion">-</div>
+            </div>
+
+            <div class="satellite-info">
+                <div class="satellite-item"><div class="satellite-dot"></div><span>SAT-1 ACTIVE</span></div>
+                <div class="satellite-item"><div class="satellite-dot"></div><span>SAT-2 ACTIVE</span></div>
+                <div class="satellite-item"><div class="satellite-dot"></div><span>SAT-3 ACTIVE</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleUrl = decodeURIComponent(urlParams.get('url') || '');
+        const articleTitle = decodeURIComponent(urlParams.get('title') || 'Artikel');
+        const articleCategory = decodeURIComponent(urlParams.get('category') || 'News');
+        const articleCountry = urlParams.get('country') || '';
+        const isBreaking = urlParams.get('breaking') === 'true';
+        const articleImage = decodeURIComponent(urlParams.get('image') || '');
+
+        const countryData = {
+            'AF': { name: 'AFGHANISTAN', region: 'CENTRAL ASIA', lat: 33, lng: 65 },
+            'EG': { name: 'ÄGYPTEN', region: 'NORTH AFRICA', lat: 27, lng: 30 },
+            'DE': { name: 'DEUTSCHLAND', region: 'CENTRAL EUROPE', lat: 51, lng: 10 },
+            'US': { name: 'USA', region: 'NORTH AMERICA', lat: 38, lng: -97 },
+            'RU': { name: 'RUSSLAND', region: 'EURASIA', lat: 60, lng: 100 },
+            'CN': { name: 'CHINA', region: 'EAST ASIA', lat: 35, lng: 105 },
+            'GB': { name: 'GROSSBRITANNIEN', region: 'WESTERN EUROPE', lat: 54, lng: -2 },
+            'FR': { name: 'FRANKREICH', region: 'WESTERN EUROPE', lat: 46, lng: 2 },
+            'JP': { name: 'JAPAN', region: 'EAST ASIA', lat: 36, lng: 138 },
+            'IN': { name: 'INDIEN', region: 'SOUTH ASIA', lat: 20, lng: 77 },
+            'UA': { name: 'UKRAINE', region: 'EASTERN EUROPE', lat: 49, lng: 32 },
+            'IL': { name: 'ISRAEL', region: 'MIDDLE EAST', lat: 31, lng: 35 },
+            'IR': { name: 'IRAN', region: 'MIDDLE EAST', lat: 32, lng: 53 },
+            'TR': { name: 'TÜRKEI', region: 'EURASIA', lat: 39, lng: 35 },
+            'AT': { name: 'ÖSTERREICH', region: 'CENTRAL EUROPE', lat: 47, lng: 14 },
+            'CH': { name: 'SCHWEIZ', region: 'CENTRAL EUROPE', lat: 47, lng: 8 },
+            'GLOBAL': { name: 'GLOBAL', region: 'WORLDWIDE', lat: 0, lng: 0 }
+        };
+
+        document.getElementById('categoryBadge').textContent = articleCategory.toUpperCase();
+        if (isBreaking) {
+            document.getElementById('categoryBadge').classList.add('breaking');
+            document.getElementById('categoryBadge').textContent = '⚡ EILMELDUNG';
+        }
+
+        const country = countryData[articleCountry] || { name: 'UNBEKANNT', region: '-', lat: 0, lng: 0 };
+        document.getElementById('countryName').textContent = country.name;
+        document.getElementById('countryRegion').textContent = country.region;
+        document.getElementById('openExternalBtn').onclick = () => window.open(articleUrl, '_blank');
+
+        // ============ MULTI-SCRAPER SYSTEM ============
+        const scrapers = [
+            {
+                name: 'allorigins',
+                displayName: 'AllOrigins',
+                fetch: async (url) => {
+                    const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    if (!r.ok) throw new Error('Failed');
+                    return await r.text();
+                }
+            },
+            {
+                name: 'corsproxy',
+                displayName: 'CORS Proxy',
+                fetch: async (url) => {
+                    const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                    if (!r.ok) throw new Error('Failed');
+                    return await r.text();
+                }
+            },
+            {
+                name: 'codetabs',
+                displayName: 'CodeTabs',
+                fetch: async (url) => {
+                    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
+                    if (!r.ok) throw new Error('Failed');
+                    return await r.text();
+                }
+            },
+            {
+                name: 'thingproxy',
+                displayName: 'ThingProxy',
+                fetch: async (url) => {
+                    const r = await fetch(`https://thingproxy.freeboard.io/fetch/${url}`);
+                    if (!r.ok) throw new Error('Failed');
+                    return await r.text();
+                }
+            },
+            {
+                name: 'jsonlink',
+                displayName: 'JSONLink',
+                fetch: async (url) => {
+                    const r = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(url)}`);
+                    if (!r.ok) throw new Error('Failed');
+                    const data = await r.json();
+                    if (data.title || data.description) {
+                        return `JSONLINK:${JSON.stringify(data)}`;
+                    }
+                    throw new Error('No data');
+                }
+            }
+        ];
+
+        function updateScraperUI(name, status, icon) {
+            const item = document.querySelector(`[data-scraper="${name}"]`);
+            const iconEl = document.getElementById(`icon-${name}`);
+            const statusEl = document.getElementById(`status-${name}`);
+            
+            item.className = 'scraper-item ' + status;
+            iconEl.textContent = icon;
+            iconEl.className = 'scraper-icon' + (status === 'active' ? ' loading' : '');
+            
+            const statusTexts = {
+                'active': 'Scraping...',
+                'success': 'Erfolgreich!',
+                'failed': 'Fehlgeschlagen'
+            };
+            statusEl.textContent = statusTexts[status] || 'Wartend...';
+        }
+
+        function parseHTML(html, scraperName) {
+            if (html.startsWith('JSONLINK:')) {
+                const data = JSON.parse(html.replace('JSONLINK:', ''));
+                return {
+                    title: data.title || articleTitle,
+                    content: `<p>${data.description || ''}</p>`,
+                    success: !!(data.title || data.description)
+                };
+            }
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const title = doc.querySelector('h1')?.textContent?.trim() || 
+                         doc.querySelector('[class*="title"]')?.textContent?.trim() ||
+                         doc.querySelector('title')?.textContent?.trim() || 
+                         articleTitle;
+            
+            const selectors = [
+                'article', '[class*="article-body"]', '[class*="article-content"]',
+                '[class*="story-body"]', '[class*="post-content"]', '[class*="entry-content"]',
+                '[itemprop="articleBody"]', 'main', '#content', '.story'
+            ];
+
+            let content = '';
+            
+            for (const sel of selectors) {
+                const el = doc.querySelector(sel);
+                if (el) {
+                    el.querySelectorAll('p').forEach(p => {
+                        const text = p.textContent?.trim();
+                        if (text && text.length > 40) content += `<p>${text}</p>`;
+                    });
+                    if (content.length > 200) break;
+                }
+            }
+
+            if (content.length < 200) {
+                doc.querySelectorAll('p').forEach(p => {
+                    const text = p.textContent?.trim();
+                    if (text && text.length > 60) content += `<p>${text}</p>`;
+                });
+            }
+
+            return { title, content, success: content.length > 100 };
+        }
+
+        async function runScrapers() {
+            const loading = document.getElementById('readerLoading');
+            const error = document.getElementById('readerError');
+            const wrapper = document.getElementById('articleWrapper');
+            const statusText = document.getElementById('loadingStatus');
+
+            let result = null;
+            let successScraper = null;
+
+            for (let i = 0; i < scrapers.length; i++) {
+                const scraper = scrapers[i];
+                statusText.textContent = `Versuche ${scraper.displayName}... (${i + 1}/${scrapers.length})`;
+                updateScraperUI(scraper.name, 'active', '🔄');
+
+                try {
+                    const html = await Promise.race([
+                        scraper.fetch(articleUrl),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), 10000))
+                    ]);
+
+                    const parsed = parseHTML(html, scraper.name);
+                    
+                    if (parsed.success) {
+                        updateScraperUI(scraper.name, 'success', '✓');
+                        result = parsed;
+                        successScraper = scraper;
+                        break;
+                    } else {
+                        updateScraperUI(scraper.name, 'failed', '✗');
+                    }
+                } catch (err) {
+                    console.log(`${scraper.name} failed:`, err.message);
+                    updateScraperUI(scraper.name, 'failed', '✗');
+                }
+
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            if (result && successScraper) {
+                statusText.textContent = 'Artikel erfolgreich extrahiert!';
+                await new Promise(r => setTimeout(r, 800));
+
+                const domain = new URL(articleUrl).hostname.replace('www.', '');
+                document.getElementById('sourceName').textContent = domain.toUpperCase();
+                document.getElementById('sourceDomain').textContent = articleUrl;
+                document.getElementById('sourceLink').href = articleUrl;
+                document.getElementById('articleTitle').textContent = result.title;
+                document.getElementById('articleDate').textContent = '📅 ' + new Date().toLocaleDateString('de-DE');
+                
+                const words = result.content.split(/\s+/).length;
+                document.getElementById('articleReadTime').textContent = '⏱ ' + Math.max(1, Math.ceil(words / 200)) + ' min';
+                document.getElementById('articleCountryMeta').textContent = '🌍 ' + country.name;
+                document.getElementById('scraperMethod').textContent = successScraper.displayName;
+                document.getElementById('articleContent').innerHTML = result.content;
+
+                if (articleImage) {
+                    const img = document.getElementById('articleImage');
+                    img.src = articleImage;
+                    img.style.display = 'block';
+                    img.onerror = () => img.style.display = 'none';
+                }
+
+                loading.classList.add('hidden');
+                wrapper.classList.add('show');
+            } else {
+                statusText.textContent = 'Alle Scraper fehlgeschlagen';
+                await new Promise(r => setTimeout(r, 800));
+                loading.classList.add('hidden');
+                error.classList.add('show');
+            }
+        }
+
+        if (articleUrl) {
+            runScrapers();
+        } else {
+            document.getElementById('readerLoading').classList.add('hidden');
+            document.getElementById('readerError').classList.add('show');
+        }
+
+        document.getElementById('readerContainer').addEventListener('scroll', function() {
+            const progress = this.scrollHeight > this.clientHeight 
+                ? (this.scrollTop / (this.scrollHeight - this.clientHeight)) * 100 
+                : 0;
+            document.getElementById('readingProgress').style.width = progress + '%';
+        });
+
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('datetime').textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE');
+            document.getElementById('utcTime').textContent = now.toUTCString().split(' ')[4];
+            document.getElementById('localTime').textContent = now.toLocaleTimeString('de-DE');
+            const sunLng = (12 - now.getUTCHours()) * 15;
+            document.getElementById('sunPosition').textContent = `${sunLng > 0 ? '+' : ''}${sunLng}° LNG`;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // ============ THREE.JS GLOBE ============
+        let scene, camera, renderer, globe, satellites = [];
+
+        function initGlobe() {
+            const canvas = document.getElementById('globe-canvas');
+            const w = canvas.offsetWidth, h = canvas.offsetHeight;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+            camera.position.z = 2.5;
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            globe = new THREE.Mesh(
+                new THREE.SphereGeometry(1, 64, 64),
+                new THREE.MeshPhongMaterial({ color: 0x1a1a2e, emissive: 0x0a0a15, specular: 0x333333, shininess: 5 })
+            );
+            scene.add(globe);
+
+            globe.add(new THREE.Mesh(
+                new THREE.SphereGeometry(1.002, 36, 18),
+                new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: true, transparent: true, opacity: 0.3 })
+            ));
+
+            scene.add(new THREE.Mesh(
+                new THREE.SphereGeometry(1.1, 64, 64),
+                new THREE.MeshBasicMaterial({ color: 0x4444ff, transparent: true, opacity: 0.1, side: THREE.BackSide })
+            ));
+
+            for (let i = 0; i < 8; i++) {
+                const sat = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.02, 0.02, 0.04),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff })
+                );
+                sat.userData = {
+                    r: 1.3 + Math.random() * 0.4,
+                    s: 0.001 + Math.random() * 0.002,
+                    o: Math.random() * Math.PI * 2,
+                    t: Math.random() * 0.5
+                };
+                scene.add(sat);
+                satellites.push(sat);
+            }
+
+            for (let i = 0; i < 3; i++) {
+                const orbit = new THREE.Mesh(
+                    new THREE.RingGeometry(1.28 + i * 0.15, 1.3 + i * 0.15, 64),
+                    new THREE.MeshBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
+                );
+                orbit.rotation.x = Math.PI / 2 + Math.random() * 0.5;
+                orbit.rotation.y = Math.random() * Math.PI;
+                scene.add(orbit);
+            }
+
+            const stars = new THREE.BufferGeometry();
+            const v = [];
+            for (let i = 0; i < 2000; i++) v.push((Math.random()-0.5)*100, (Math.random()-0.5)*100, (Math.random()-0.5)*100);
+            stars.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+            scene.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02 })));
+
+            scene.add(new THREE.AmbientLight(0x222222));
+            const sun = new THREE.DirectionalLight(0xffffee, 1);
+            sun.position.set(5, 3, 5);
+            scene.add(sun);
+
+            if (country.lat && country.lng && articleCountry !== 'GLOBAL') {
+                const phi = (90 - country.lat) * Math.PI / 180;
+                const theta = (country.lng + 180) * Math.PI / 180;
+                const x = -1.02 * Math.sin(phi) * Math.cos(theta);
+                const y = 1.02 * Math.cos(phi);
+                const z = 1.02 * Math.sin(phi) * Math.sin(theta);
+
+                const marker = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.03, 16, 16),
+                    new THREE.MeshBasicMaterial({ color: isBreaking ? 0xff3333 : 0x4ade80 })
+                );
+                marker.position.set(x, y, z);
+                globe.add(marker);
+                globe.rotation.x = phi - Math.PI / 2;
+                globe.rotation.y = -theta + Math.PI;
+            }
+
+            animate();
+            window.addEventListener('resize', () => {
+                camera.aspect = canvas.offsetWidth / canvas.offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            globe.rotation.y += 0.002;
+            const t = Date.now() * 0.001;
+            satellites.forEach(s => {
+                const a = t * s.userData.s * 50 + s.userData.o;
+                s.position.set(
+                    Math.cos(a) * s.userData.r,
+                    Math.sin(a) * s.userData.r * Math.sin(s.userData.t),
+                    Math.sin(a) * s.userData.r * Math.cos(s.userData.t)
+                );
+            });
+            renderer.render(scene, camera);
+        }
+
+        initGlobe();
+        setInterval(() => document.getElementById('activeSats').textContent = Math.floor(40 + Math.random() * 20), 5000);
+    </script>
+</body>
+</html>

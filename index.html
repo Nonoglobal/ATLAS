@@ -5,733 +5,335 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS // ARCHIVES</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: 'Share Tech Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+        
+        .grid-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: 0; }
 
-        body {
-            background: #000;
-            color: #fff;
-            font-family: 'Share Tech Mono', monospace;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        /* ============ LOADING SCREEN ============ */
+        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s; }
+        .loading-screen.hidden { opacity: 0; pointer-events: none; }
+        
+        .loading-logo { font-family: 'Orbitron', sans-serif; font-size: 64px; font-weight: 900; letter-spacing: 15px; margin-bottom: 10px; animation: glitch 2s infinite; }
+        @keyframes glitch { 0%,90%,100% { transform: translate(0); } 92% { transform: translate(-3px, 1px); } 94% { transform: translate(3px, -1px); } 96% { transform: translate(-1px, -2px); } }
+        
+        .loading-subtitle { font-size: 10px; letter-spacing: 5px; color: #444; margin-bottom: 50px; }
+        .loading-status { font-size: 11px; color: #666; margin-bottom: 20px; letter-spacing: 2px; }
+        
+        .loading-progress-bar { width: 300px; height: 2px; background: #1a1a1a; margin-bottom: 30px; overflow: hidden; }
+        .loading-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.3s; }
+        
+        .loading-sources { display: flex; flex-direction: column; gap: 10px; width: 280px; }
+        .loading-source { display: flex; align-items: center; gap: 12px; padding: 10px 15px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; }
+        .loading-source.active { border-color: #333; background: rgba(255,255,255,0.05); }
+        .loading-source.done { border-color: #4ade80; background: rgba(74,222,128,0.1); }
+        .loading-source.error { border-color: #ff6b6b; opacity: 0.5; }
+        .loading-source-icon { font-size: 14px; }
+        .loading-source-name { font-size: 10px; letter-spacing: 2px; flex: 1; }
+        .loading-source-status { font-size: 9px; color: #666; }
+        .loading-source.active .loading-source-status { color: #888; }
+        .loading-source.done .loading-source-status { color: #4ade80; }
 
-        /* Grid Background */
-        .grid-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* ===================== AUTH SCREEN ===================== */
-        .auth-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            background: #000;
-        }
-
+        /* ============ AUTH SCREEN ============ */
+        .auth-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 1000; background: #000; }
         .auth-container.hidden { display: none; }
-
-        .auth-box {
-            background: rgba(10, 10, 15, 0.95);
-            border: 1px solid #222;
-            padding: 50px;
-            width: 100%;
-            max-width: 420px;
-            position: relative;
-        }
-
-        .auth-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #fff, transparent);
-        }
-
-        .auth-logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 48px;
-            font-weight: 900;
-            text-align: center;
-            letter-spacing: 10px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #ffffff 0%, #666 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .auth-subtitle {
-            text-align: center;
-            font-size: 10px;
-            letter-spacing: 5px;
-            color: #444;
-            margin-bottom: 40px;
-        }
-
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 30px;
-            border-bottom: 1px solid #222;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 15px;
-            background: none;
-            border: none;
-            color: #444;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .auth-tab.active {
-            color: #fff;
-            border-bottom: 2px solid #fff;
-        }
-
+        .auth-box { background: rgba(10,10,15,0.95); border: 1px solid #222; padding: 50px; width: 100%; max-width: 420px; position: relative; }
+        .auth-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #fff, transparent); }
+        .auth-logo { font-family: 'Orbitron', sans-serif; font-size: 48px; font-weight: 900; text-align: center; letter-spacing: 10px; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #666 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .auth-subtitle { text-align: center; font-size: 10px; letter-spacing: 5px; color: #444; margin-bottom: 40px; }
+        .auth-tabs { display: flex; margin-bottom: 30px; border-bottom: 1px solid #222; }
+        .auth-tab { flex: 1; padding: 15px; background: none; border: none; color: #444; font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 3px; cursor: pointer; transition: all 0.3s; }
+        .auth-tab.active { color: #fff; border-bottom: 2px solid #fff; }
         .auth-form { display: none; }
         .auth-form.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 10px; letter-spacing: 3px; color: #666; margin-bottom: 8px; }
+        .form-group input { width: 100%; padding: 15px; background: #0a0a0f; border: 1px solid #222; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus { outline: none; border-color: #444; }
+        .auth-btn { width: 100%; padding: 18px; background: #fff; color: #000; border: none; font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 5px; cursor: pointer; margin-top: 10px; transition: all 0.3s; }
+        .auth-btn:hover { background: #ccc; }
+        .auth-error { color: #ff6b6b; font-size: 11px; margin-top: 15px; text-align: center; min-height: 20px; }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+        /* ============ MAIN APP ============ */
+        .app-container { display: none; position: relative; z-index: 1; }
+        .app-container.show { display: block; }
+        
+        .header { background: rgba(0,0,0,0.95); border-bottom: 1px solid #1a1a1a; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 30px; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900; letter-spacing: 5px; }
+        .nav-btn { padding: 10px 20px; background: none; border: 1px solid #222; color: #666; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-decoration: none; }
+        .nav-btn:hover { border-color: #fff; color: #fff; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .user-email { font-size: 10px; color: #666; letter-spacing: 2px; }
+        .logout-btn { padding: 10px 20px; background: none; border: 1px solid #333; color: #666; font-size: 10px; letter-spacing: 2px; cursor: pointer; font-family: 'Share Tech Mono', monospace; }
+        .logout-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
 
-        .form-group label {
-            display: block;
-            font-size: 9px;
-            letter-spacing: 3px;
-            color: #666;
-            margin-bottom: 8px;
-        }
+        main { padding: 40px; max-width: 1600px; margin: 0 auto; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 1px solid #1a1a1a; }
+        .tab { padding: 15px 30px; background: none; border: none; color: #444; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; cursor: pointer; position: relative; transition: color 0.3s; }
+        .tab.active { color: #fff; }
+        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #fff; }
+        .tab-badge { background: #333; color: #888; padding: 2px 8px; border-radius: 10px; font-size: 9px; margin-left: 10px; }
+        .tab.active .tab-badge { background: #fff; color: #000; }
+        .tab-badge.online { background: #4ade80; color: #000; }
 
-        .form-group input {
-            width: 100%;
-            padding: 15px;
-            background: #0a0a0f;
-            border: 1px solid #222;
-            color: #fff;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
+        /* Stats */
+        .stats-bar { display: flex; gap: 30px; margin-bottom: 30px; padding: 20px 0; border-bottom: 1px solid #1a1a1a; }
+        .stat-box { text-align: center; }
+        .stat-value { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; }
+        .stat-label { font-size: 9px; letter-spacing: 2px; color: #444; margin-top: 5px; }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #444;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 18px;
-            background: #fff;
-            color: #000;
-            border: none;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        .auth-btn:hover {
-            background: #ccc;
-        }
-
-        .auth-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        .auth-error {
-            background: rgba(255, 50, 50, 0.1);
-            border: 1px solid #ff3232;
-            color: #ff6b6b;
-            padding: 12px;
-            font-size: 11px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .auth-error.show { display: block; }
-
-        /* ===================== MAIN APP ===================== */
-        .app-container {
-            display: none;
-            min-height: 100vh;
-        }
-
-        .app-container.active { display: block; }
-
-        /* Header */
-        .header {
-            background: rgba(5, 5, 10, 0.95);
-            border-bottom: 1px solid #1a1a2e;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 28px;
-            font-weight: 900;
-            letter-spacing: 8px;
-        }
-
-        .header-user {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .user-email {
-            font-size: 11px;
-            color: #666;
-            letter-spacing: 1px;
-        }
-
-        .logout-btn {
-            padding: 10px 20px;
-            background: none;
-            border: 1px solid #333;
-            color: #666;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            border-color: #fff;
-            color: #fff;
-        }
-
-        .map-btn {
-            padding: 10px 20px;
-            background: #fff;
-            color: #000;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            border: none;
-        }
-
-        .map-btn:hover {
-            background: #ccc;
-        }
-
-        /* Main Content */
-        .main-content {
-            padding: 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Stats Bar */
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-box {
-            background: rgba(10, 10, 15, 0.8);
-            border: 1px solid #1a1a2e;
-            padding: 25px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 36px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 9px;
-            letter-spacing: 3px;
-            color: #444;
-        }
-
-        /* Documents Section */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #1a1a2e;
-        }
-
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            letter-spacing: 5px;
-            color: #fff;
-        }
-
-        .add-btn {
-            padding: 12px 25px;
-            background: #fff;
-            color: #000;
-            border: none;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .add-btn:hover {
-            background: #ccc;
-        }
+        /* Section */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .section-title { font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 5px; }
+        .add-btn { padding: 12px 25px; background: #fff; color: #000; border: none; font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; cursor: pointer; transition: all 0.3s; }
+        .add-btn:hover { background: #ccc; }
 
         /* Documents Grid */
-        .documents-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
+        .documents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .doc-card {
-            background: rgba(10, 10, 15, 0.8);
-            border: 1px solid #1a1a2e;
-            padding: 25px;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .doc-card:hover {
-            border-color: #333;
-            transform: translateY(-2px);
-        }
-
-        .doc-type {
-            font-size: 9px;
-            letter-spacing: 3px;
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .doc-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #fff;
-        }
-
-        .doc-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #444;
-        }
-
-        .doc-delete {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #444;
-            cursor: pointer;
-            font-size: 16px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .doc-card {
-            position: relative;
-        }
-
-        .doc-card:hover .doc-delete {
-            opacity: 1;
-        }
-
-        .doc-delete:hover {
-            color: #ff6b6b;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: #333;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-
-        .empty-state-text {
-            font-size: 12px;
-            letter-spacing: 3px;
-        }
+        /* Document Card */
+        .doc-card { background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; position: relative; transition: all 0.3s; cursor: pointer; overflow: hidden; }
+        .doc-card:hover { border-color: #333; transform: translateY(-2px); }
+        .doc-card.online { border-color: #1a3a1a; }
+        .doc-card.online:hover { border-color: #4ade80; }
+        
+        .doc-card-image { width: 100%; height: 160px; object-fit: cover; filter: grayscale(30%); transition: filter 0.3s; }
+        .doc-card:hover .doc-card-image { filter: grayscale(0%); }
+        .doc-card-placeholder { width: 100%; height: 160px; background: linear-gradient(135deg, #111 0%, #1a1a2e 100%); display: flex; align-items: center; justify-content: center; font-size: 40px; opacity: 0.3; }
+        
+        .doc-card-body { padding: 20px; }
+        .doc-category { font-size: 9px; letter-spacing: 2px; color: #666; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .doc-category .breaking { background: #ff3333; color: #fff; padding: 2px 6px; font-size: 8px; }
+        .doc-category .online-badge { background: #4ade80; color: #000; padding: 2px 6px; font-size: 8px; }
+        .doc-title { font-size: 14px; line-height: 1.4; color: #fff; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .doc-meta { font-size: 10px; color: #444; display: flex; justify-content: space-between; align-items: center; }
+        
+        .doc-actions { display: flex; gap: 5px; position: absolute; top: 10px; right: 10px; }
+        .doc-btn { width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.8); border: 1px solid #333; color: #666; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; opacity: 0; }
+        .doc-card:hover .doc-btn { opacity: 1; }
+        .doc-btn:hover { border-color: #fff; color: #fff; }
+        .doc-btn.save:hover { border-color: #4ade80; color: #4ade80; }
+        .doc-btn.delete:hover { border-color: #ff6b6b; color: #ff6b6b; }
 
         /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-        }
-
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal {
-            background: #0a0a0f;
-            border: 1px solid #222;
-            padding: 40px;
-            width: 100%;
-            max-width: 500px;
-            transform: translateY(20px);
-            transition: transform 0.3s;
-        }
-
-        .modal-overlay.show .modal {
-            transform: translateY(0);
-        }
-
-        .modal-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 16px;
-            letter-spacing: 5px;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #222;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: #444;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal { background: #0a0a0f; border: 1px solid #222; padding: 40px; width: 100%; max-width: 500px; position: relative; }
+        .modal-title { font-family: 'Orbitron', sans-serif; font-size: 16px; letter-spacing: 5px; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #222; }
+        .modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #444; font-size: 24px; cursor: pointer; }
         .modal-close:hover { color: #fff; }
-
-        /* Loading Spinner */
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #222;
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        
+        .form-group select { width: 100%; padding: 15px; background: #0a0a0f; border: 1px solid #222; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; }
+        .form-group select:focus { outline: none; border-color: #444; }
+        
+        .checkbox-group { margin-top: 20px; }
+        .checkbox-label { display: flex; align-items: center; cursor: pointer; gap: 12px; }
+        .checkbox-label input { display: none; }
+        .checkbox-custom { width: 20px; height: 20px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .checkbox-label input:checked + .checkbox-custom { background: #ff3333; border-color: #ff3333; }
+        .checkbox-label input:checked + .checkbox-custom::after { content: '✓'; color: #fff; font-size: 12px; }
+        .checkbox-text { font-size: 11px; letter-spacing: 2px; color: #888; }
 
         /* Connection Status */
-        .connection-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: #444;
-            z-index: 100;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #333;
-        }
-
+        .connection-status { position: fixed; bottom: 20px; right: 20px; display: flex; align-items: center; gap: 10px; font-size: 9px; letter-spacing: 2px; color: #444; z-index: 100; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; }
         .status-dot.connected { background: #4ade80; }
-        .status-dot.error { background: #ff6b6b; }
 
-        /* Select dropdown */
-        .form-group select {
-            width: 100%;
-            padding: 15px;
-            background: #0a0a0f;
-            border: 1px solid #222;
-            color: #fff;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 14px;
-            cursor: pointer;
-        }
+        /* Empty State */
+        .empty-state { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #333; }
+        .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
+        .empty-state-text { font-size: 12px; letter-spacing: 3px; }
 
-        .form-group select:focus {
-            outline: none;
-            border-color: #444;
-        }
+        /* Search */
+        .search-container { margin-bottom: 25px; }
+        .search-box { display: flex; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; padding: 0 15px; transition: border-color 0.3s; }
+        .search-box:focus-within { border-color: #444; }
+        .search-icon { font-size: 16px; margin-right: 10px; opacity: 0.5; }
+        .search-box input { flex: 1; padding: 15px 0; background: none; border: none; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+        .search-box input:focus { outline: none; }
+        .search-box input::placeholder { color: #444; }
+        .search-clear { background: none; border: none; color: #444; font-size: 20px; cursor: pointer; padding: 10px; display: none; }
+        .search-clear.show { display: block; }
+        .search-clear:hover { color: #fff; }
+        
+        .search-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+        .search-tag { padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid #222; font-size: 10px; letter-spacing: 1px; color: #888; cursor: pointer; transition: all 0.3s; }
+        .search-tag:hover { border-color: #444; color: #fff; }
+        .search-tag.active { background: #fff; color: #000; border-color: #fff; }
+        
+        .search-results { margin-top: 10px; font-size: 11px; color: #666; letter-spacing: 1px; min-height: 20px; }
 
-        .form-group select option {
-            background: #0a0a0f;
-            color: #fff;
-        }
+        /* Keyword Tags on Cards */
+        .doc-keywords { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .doc-keyword { padding: 2px 6px; background: rgba(255,255,255,0.05); font-size: 8px; letter-spacing: 1px; color: #666; }
+        .doc-keyword.match { background: rgba(74,222,128,0.2); color: #4ade80; }
 
-        /* Checkbox */
-        .checkbox-group {
-            margin-top: 20px;
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            gap: 12px;
-        }
-
-        .checkbox-label input {
-            display: none;
-        }
-
-        .checkbox-custom {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #333;
-            background: #0a0a0f;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .checkbox-label input:checked + .checkbox-custom {
-            border-color: #ff3333;
-            background: #ff3333;
-        }
-
-        .checkbox-label input:checked + .checkbox-custom::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #000;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .checkbox-text {
-            font-size: 11px;
-            letter-spacing: 2px;
-            color: #ff3333;
-        }
-
-        /* Article Card */
-        .doc-card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .doc-card-image {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-            margin-bottom: 15px;
-            background: #111;
-        }
-
-        .doc-card-placeholder {
-            width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, #111 0%, #1a1a2e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            font-size: 40px;
-            opacity: 0.3;
-        }
-
-        .doc-category {
-            display: inline-block;
-            padding: 4px 10px;
-            background: rgba(255,255,255,0.1);
-            font-size: 9px;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-
-        .doc-card a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .doc-card:hover .doc-title {
-            text-decoration: underline;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header { padding: 15px 20px; }
-            .header-logo { font-size: 20px; letter-spacing: 5px; }
-            .main-content { padding: 20px; }
-            .stats-bar { grid-template-columns: repeat(2, 1fr); }
-            .auth-box { padding: 30px 20px; margin: 20px; }
-        }
+        /* Spinner */
+        .loading { display: flex; justify-content: center; align-items: center; padding: 40px; grid-column: 1/-1; }
+        .spinner { width: 40px; height: 40px; border: 2px solid #222; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="grid-bg"></div>
 
-    <!-- ==================== AUTH SCREEN ==================== -->
-    <div class="auth-container" id="authContainer">
+    <!-- ============ LOADING SCREEN ============ -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">ATLAS</div>
+        <div class="loading-subtitle">LIBRARY ARCHIVES SYSTEM</div>
+        <div class="loading-status" id="loadingStatusText">Initialisiere System...</div>
+        <div class="loading-progress-bar">
+            <div class="loading-progress-fill" id="loadingProgressFill"></div>
+        </div>
+        <div class="loading-sources" id="loadingSources">
+            <div class="loading-source" data-source="auth">
+                <div class="loading-source-icon">🔐</div>
+                <div class="loading-source-name">AUTHENTICATION</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="google">
+                <div class="loading-source-icon">📊</div>
+                <div class="loading-source-name">GOOGLE FINANCE</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="yahoo">
+                <div class="loading-source-icon">📰</div>
+                <div class="loading-source-name">YAHOO NEWS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="cnbc">
+                <div class="loading-source-icon">💹</div>
+                <div class="loading-source-name">CNBC</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AUTH SCREEN ============ -->
+    <div class="auth-container hidden" id="authContainer">
         <div class="auth-box">
             <div class="auth-logo">ATLAS</div>
             <div class="auth-subtitle">LIBRARY ARCHIVES SYSTEM</div>
-
             <div class="auth-tabs">
                 <button class="auth-tab active" data-tab="login">ANMELDEN</button>
                 <button class="auth-tab" data-tab="register">REGISTRIEREN</button>
             </div>
-
-            <div class="auth-error" id="authError"></div>
-
-            <!-- Login Form -->
             <form class="auth-form active" id="loginForm">
                 <div class="form-group">
                     <label>E-MAIL</label>
-                    <input type="email" id="loginEmail" required autocomplete="email">
+                    <input type="email" id="loginEmail" required>
                 </div>
                 <div class="form-group">
                     <label>PASSWORT</label>
-                    <input type="password" id="loginPassword" required autocomplete="current-password">
+                    <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit" class="auth-btn">EINLOGGEN</button>
+                <div class="auth-error" id="loginError"></div>
             </form>
-
-            <!-- Register Form -->
             <form class="auth-form" id="registerForm">
                 <div class="form-group">
                     <label>E-MAIL</label>
-                    <input type="email" id="registerEmail" required autocomplete="email">
+                    <input type="email" id="registerEmail" required>
                 </div>
                 <div class="form-group">
                     <label>PASSWORT</label>
-                    <input type="password" id="registerPassword" required minlength="6" autocomplete="new-password">
+                    <input type="password" id="registerPassword" required>
                 </div>
-                <div class="form-group">
-                    <label>PASSWORT BESTÄTIGEN</label>
-                    <input type="password" id="registerPasswordConfirm" required minlength="6" autocomplete="new-password">
-                </div>
-                <button type="submit" class="auth-btn">KONTO ERSTELLEN</button>
+                <button type="submit" class="auth-btn">REGISTRIEREN</button>
+                <div class="auth-error" id="registerError"></div>
             </form>
         </div>
     </div>
 
-    <!-- ==================== MAIN APP ==================== -->
+    <!-- ============ MAIN APP ============ -->
     <div class="app-container" id="appContainer">
         <header class="header">
-            <div class="header-logo">ATLAS</div>
-            <div class="header-user">
-                <a href="map.html" class="map-btn">🌍 WELTKARTE</a>
+            <div class="header-left">
+                <div class="logo">ATLAS</div>
+                <a href="map.html" class="nav-btn">🌍 WELTKARTE</a>
+            </div>
+            <div class="header-right">
                 <span class="user-email" id="userEmail"></span>
-                <button class="logout-btn" id="logoutBtn">ABMELDEN</button>
+                <button class="logout-btn" id="logoutBtn">LOGOUT</button>
             </div>
         </header>
 
-        <main class="main-content">
+        <main>
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="online">
+                    LIVE FEED
+                    <span class="tab-badge online" id="onlineCount">0</span>
+                </button>
+                <button class="tab" data-tab="saved">
+                    GESPEICHERT
+                    <span class="tab-badge" id="savedCount">0</span>
+                </button>
+            </div>
+
             <!-- Stats -->
             <div class="stats-bar">
                 <div class="stat-box">
-                    <div class="stat-value" id="statDocs">0</div>
-                    <div class="stat-label">ARTIKEL</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">GESAMT</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value" id="statFolders">0</div>
-                    <div class="stat-label">KATEGORIEN</div>
+                    <div class="stat-value" id="statOnline">0</div>
+                    <div class="stat-label">LIVE</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value" id="statSize">0</div>
-                    <div class="stat-label">DIESE WOCHE</div>
+                    <div class="stat-value" id="statSaved">0</div>
+                    <div class="stat-label">GESPEICHERT</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value" id="statSync">--</div>
+                    <div class="stat-value" id="statSync">--:--</div>
                     <div class="stat-label">LETZTER SYNC</div>
                 </div>
             </div>
 
-            <!-- Documents Section -->
-            <section>
+            <!-- Online Tab Content -->
+            <div class="tab-content active" id="onlineContent">
                 <div class="section-header">
-                    <h2 class="section-title">MEINE ARTIKEL</h2>
-                    <button class="add-btn" id="addDocBtn">+ HINZUFÜGEN</button>
+                    <h2 class="section-title">LIVE NEWS FEED</h2>
+                    <button class="add-btn" id="refreshBtn">↻ REFRESH</button>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Suche nach Schlagwörtern... (z.B. Grönland, Trump, Bitcoin)">
+                        <button class="search-clear" id="searchClear">×</button>
+                    </div>
+                    <div class="search-tags" id="searchTags"></div>
+                    <div class="search-results" id="searchResults"></div>
                 </div>
 
-                <div class="documents-grid" id="documentsGrid">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
+                <div class="documents-grid" id="onlineGrid">
+                    <div class="loading"><div class="spinner"></div></div>
                 </div>
-            </section>
+            </div>
+
+            <!-- Saved Tab Content -->
+            <div class="tab-content" id="savedContent">
+                <div class="section-header">
+                    <h2 class="section-title">GESPEICHERTE ARTIKEL</h2>
+                    <button class="add-btn" id="addDocBtn">+ HINZUFÜGEN</button>
+                </div>
+                <div class="documents-grid" id="savedGrid">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <!-- ==================== ADD ARTICLE MODAL ==================== -->
+    <!-- ============ ADD ARTICLE MODAL ============ -->
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <button class="modal-close" id="modalClose">&times;</button>
@@ -749,103 +351,24 @@
                     <label>LAND</label>
                     <select id="articleCountry" required>
                         <option value="">Land wählen...</option>
-                        <option value="AF">Afghanistan</option>
-                        <option value="EG">Ägypten</option>
-                        <option value="AL">Albanien</option>
-                        <option value="DZ">Algerien</option>
-                        <option value="AR">Argentinien</option>
-                        <option value="AM">Armenien</option>
-                        <option value="AZ">Aserbaidschan</option>
-                        <option value="ET">Äthiopien</option>
-                        <option value="AU">Australien</option>
-                        <option value="BE">Belgien</option>
-                        <option value="BO">Bolivien</option>
-                        <option value="BA">Bosnien und Herzegowina</option>
-                        <option value="BR">Brasilien</option>
-                        <option value="BG">Bulgarien</option>
-                        <option value="CL">Chile</option>
-                        <option value="CN">China</option>
-                        <option value="DK">Dänemark</option>
-                        <option value="DE">Deutschland</option>
-                        <option value="EC">Ecuador</option>
-                        <option value="EE">Estland</option>
-                        <option value="FI">Finnland</option>
-                        <option value="FR">Frankreich</option>
-                        <option value="GE">Georgien</option>
-                        <option value="GH">Ghana</option>
-                        <option value="GR">Griechenland</option>
-                        <option value="GB">Großbritannien</option>
-                        <option value="IN">Indien</option>
-                        <option value="ID">Indonesien</option>
-                        <option value="IQ">Irak</option>
-                        <option value="IR">Iran</option>
-                        <option value="IE">Irland</option>
-                        <option value="IS">Island</option>
-                        <option value="IL">Israel</option>
-                        <option value="IT">Italien</option>
-                        <option value="JP">Japan</option>
-                        <option value="YE">Jemen</option>
-                        <option value="JO">Jordanien</option>
-                        <option value="CA">Kanada</option>
-                        <option value="KZ">Kasachstan</option>
-                        <option value="KE">Kenia</option>
-                        <option value="CO">Kolumbien</option>
-                        <option value="HR">Kroatien</option>
-                        <option value="CU">Kuba</option>
-                        <option value="LV">Lettland</option>
-                        <option value="LB">Libanon</option>
-                        <option value="LY">Libyen</option>
-                        <option value="LT">Litauen</option>
-                        <option value="MY">Malaysia</option>
-                        <option value="MA">Marokko</option>
-                        <option value="MX">Mexiko</option>
-                        <option value="MD">Moldawien</option>
-                        <option value="MN">Mongolei</option>
-                        <option value="ME">Montenegro</option>
-                        <option value="MM">Myanmar</option>
-                        <option value="NZ">Neuseeland</option>
-                        <option value="NL">Niederlande</option>
-                        <option value="NG">Nigeria</option>
-                        <option value="KP">Nordkorea</option>
-                        <option value="MK">Nordmazedonien</option>
-                        <option value="NO">Norwegen</option>
-                        <option value="AT">Österreich</option>
-                        <option value="PK">Pakistan</option>
-                        <option value="PS">Palästina</option>
-                        <option value="PA">Panama</option>
-                        <option value="PE">Peru</option>
-                        <option value="PH">Philippinen</option>
-                        <option value="PL">Polen</option>
-                        <option value="PT">Portugal</option>
-                        <option value="RO">Rumänien</option>
-                        <option value="RU">Russland</option>
-                        <option value="SA">Saudi-Arabien</option>
-                        <option value="SE">Schweden</option>
-                        <option value="CH">Schweiz</option>
-                        <option value="RS">Serbien</option>
-                        <option value="SG">Singapur</option>
-                        <option value="SK">Slowakei</option>
-                        <option value="SI">Slowenien</option>
-                        <option value="SO">Somalia</option>
-                        <option value="ES">Spanien</option>
-                        <option value="ZA">Südafrika</option>
-                        <option value="KR">Südkorea</option>
-                        <option value="SD">Sudan</option>
-                        <option value="SY">Syrien</option>
-                        <option value="TW">Taiwan</option>
-                        <option value="TH">Thailand</option>
-                        <option value="CZ">Tschechien</option>
-                        <option value="TN">Tunesien</option>
-                        <option value="TR">Türkei</option>
-                        <option value="UA">Ukraine</option>
-                        <option value="HU">Ungarn</option>
-                        <option value="US">USA</option>
-                        <option value="UZ">Usbekistan</option>
-                        <option value="VE">Venezuela</option>
-                        <option value="AE">Vereinigte Arabische Emirate</option>
-                        <option value="VN">Vietnam</option>
-                        <option value="BY">Weißrussland</option>
                         <option value="GLOBAL">Global / Weltweit</option>
+                        <option value="DE">Deutschland</option>
+                        <option value="AT">Österreich</option>
+                        <option value="CH">Schweiz</option>
+                        <option value="US">USA</option>
+                        <option value="GB">Großbritannien</option>
+                        <option value="FR">Frankreich</option>
+                        <option value="RU">Russland</option>
+                        <option value="CN">China</option>
+                        <option value="JP">Japan</option>
+                        <option value="IN">Indien</option>
+                        <option value="UA">Ukraine</option>
+                        <option value="IL">Israel</option>
+                        <option value="IR">Iran</option>
+                        <option value="SA">Saudi-Arabien</option>
+                        <option value="TR">Türkei</option>
+                        <option value="BR">Brasilien</option>
+                        <option value="AU">Australien</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -853,348 +376,627 @@
                     <select id="articleCategory" required>
                         <option value="">Kategorie wählen...</option>
                         <option value="Politik">Politik</option>
-                        <option value="Sicherheitspolitik">Sicherheitspolitik</option>
                         <option value="Wirtschaft">Wirtschaft</option>
-                        <option value="Militär">Militär</option>
+                        <option value="Finanzen">Finanzen</option>
+                        <option value="Geopolitik">Geopolitik</option>
+                        <option value="Investment">Investment</option>
+                        <option value="Märkte">Märkte</option>
                         <option value="Technologie">Technologie</option>
-                        <option value="Wissenschaft">Wissenschaft</option>
-                        <option value="Diplomatie">Diplomatie</option>
-                        <option value="Konflikte">Konflikte</option>
-                        <option value="Terrorismus">Terrorismus</option>
-                        <option value="Geheimdienste">Geheimdienste</option>
                         <option value="Energie">Energie</option>
-                        <option value="Klima">Klima</option>
-                        <option value="Gesundheit">Gesundheit</option>
-                        <option value="Sonstiges">Sonstiges</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>BILD-URL (optional)</label>
-                    <input type="url" id="articleImage" placeholder="https://...bild.jpg">
+                    <input type="url" id="articleImage" placeholder="https://...">
                 </div>
-                <div class="form-group checkbox-group">
+                <div class="checkbox-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="articleBreaking">
                         <span class="checkbox-custom"></span>
                         <span class="checkbox-text">⚡ EILMELDUNG</span>
                     </label>
                 </div>
-                <button type="submit" class="auth-btn">SPEICHERN</button>
+                <button type="submit" class="auth-btn" style="margin-top: 25px;">SPEICHERN</button>
             </form>
         </div>
     </div>
 
-    <!-- Connection Status -->
     <div class="connection-status">
         <div class="status-dot" id="statusDot"></div>
         <span id="statusText">VERBINDE...</span>
     </div>
 
-    <!-- ==================== FIREBASE ==================== -->
     <script type="module">
-        // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword,
-            onAuthStateChanged,
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc,
-            addDoc, 
-            getDocs,
-            deleteDoc,
-            query, 
-            where,
-            orderBy,
-            onSnapshot,
-            serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // ============ FIREBASE CONFIG ============
         const firebaseConfig = {
             apiKey: "AIzaSyDrrnWy5d5tlHlxi965WGc_7Gs3GIXY0Qw",
             authDomain: "atlas-4e16d.firebaseapp.com",
             projectId: "atlas-4e16d",
             storageBucket: "atlas-4e16d.firebasestorage.app",
             messagingSenderId: "494472010986",
-            appId: "1:494472010986:web:9659fd71b4bcede8770b93",
-            measurementId: "G-GWV3Z22YXC"
+            appId: "1:494472010986:web:9659fd71b4bcede8770b93"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
-        // ============ DOM ELEMENTS ============
+        // DOM Elements
+        const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
-        const authError = document.getElementById('authError');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const authTabs = document.querySelectorAll('.auth-tab');
-        const userEmailEl = document.getElementById('userEmail');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const documentsGrid = document.getElementById('documentsGrid');
-        const addDocBtn = document.getElementById('addDocBtn');
-        const addModal = document.getElementById('addModal');
-        const modalClose = document.getElementById('modalClose');
-        const addDocForm = document.getElementById('addDocForm');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-
-        // Stats
-        const statDocs = document.getElementById('statDocs');
-        const statFolders = document.getElementById('statFolders');
-        const statSize = document.getElementById('statSize');
-        const statSync = document.getElementById('statSync');
+        const onlineGrid = document.getElementById('onlineGrid');
+        const savedGrid = document.getElementById('savedGrid');
 
         let currentUser = null;
+        let onlineArticles = [];
+        let savedArticles = [];
         let unsubscribe = null;
 
-        // ============ AUTH STATE LISTENER ============
-        onAuthStateChanged(auth, (user) => {
+        // ============ LOADING SCREEN ============
+        function updateLoadingSource(name, status, statusText) {
+            const el = document.querySelector(`[data-source="${name}"]`);
+            if (!el) return;
+            el.className = 'loading-source ' + status;
+            el.querySelector('.loading-source-status').textContent = statusText;
+        }
+
+        function updateLoadingProgress(percent) {
+            document.getElementById('loadingProgressFill').style.width = percent + '%';
+        }
+
+        function updateLoadingStatus(text) {
+            document.getElementById('loadingStatusText').textContent = text;
+        }
+
+        // ============ NEWS SCRAPERS ============
+        const newsScrapers = [
+            {
+                name: 'google',
+                displayName: 'Google Finance',
+                url: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpmTjNRU0FtUmxHZ0pCVkNnQVAB',
+                parse: parseRSS,
+                category: 'Finanzen'
+            },
+            {
+                name: 'yahoo',
+                displayName: 'Yahoo Finance',
+                url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC&region=US&lang=en-US',
+                parse: parseRSS,
+                category: 'Märkte'
+            },
+            {
+                name: 'cnbc',
+                displayName: 'CNBC',
+                url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+                parse: parseRSS,
+                category: 'Wirtschaft'
+            }
+        ];
+
+        async function fetchWithProxy(url) {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+            ];
+            
+            for (const proxyUrl of proxies) {
+                try {
+                    const response = await fetch(proxyUrl);
+                    if (response.ok) return await response.text();
+                } catch (e) { continue; }
+            }
+            throw new Error('All proxies failed');
+        }
+
+        function parseRSS(xml, category) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xml, 'text/xml');
+            const items = doc.querySelectorAll('item');
+            const articles = [];
+            const now = new Date();
+            const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+
+            items.forEach(item => {
+                try {
+                    const pubDate = new Date(item.querySelector('pubDate')?.textContent);
+                    if (pubDate < oneDayAgo) return;
+
+                    const title = item.querySelector('title')?.textContent || '';
+                    const link = item.querySelector('link')?.textContent || '';
+                    const description = item.querySelector('description')?.textContent || '';
+                    
+                    // Extract image from description or media content
+                    let imageUrl = '';
+                    const mediaContent = item.querySelector('media\\:content, content');
+                    if (mediaContent) imageUrl = mediaContent.getAttribute('url') || '';
+                    
+                    if (!imageUrl) {
+                        const imgMatch = description.match(/<img[^>]+src="([^">]+)"/);
+                        if (imgMatch) imageUrl = imgMatch[1];
+                    }
+
+                    if (title && link) {
+                        const keywords = extractKeywords(title, description);
+                        articles.push({
+                            id: 'online_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                            title: title.replace(/<[^>]*>/g, ''),
+                            url: link,
+                            imageUrl: imageUrl,
+                            category: category,
+                            country: 'GLOBAL',
+                            isBreaking: false,
+                            isOnline: true,
+                            createdAt: pubDate,
+                            source: new URL(link).hostname.replace('www.', ''),
+                            keywords: keywords
+                        });
+                    }
+                } catch (e) {}
+            });
+
+            return articles;
+        }
+
+        async function scrapeAllNews() {
+            onlineArticles = [];
+            let progress = 25;
+
+            for (const scraper of newsScrapers) {
+                updateLoadingSource(scraper.name, 'active', 'Scraping...');
+                updateLoadingStatus(`Lade ${scraper.displayName}...`);
+
+                try {
+                    const xml = await Promise.race([
+                        fetchWithProxy(scraper.url),
+                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 15000))
+                    ]);
+
+                    const articles = scraper.parse(xml, scraper.category);
+                    onlineArticles.push(...articles);
+                    
+                    updateLoadingSource(scraper.name, 'done', `${articles.length} Artikel`);
+                } catch (e) {
+                    console.error(`${scraper.name} failed:`, e);
+                    updateLoadingSource(scraper.name, 'error', 'Fehlgeschlagen');
+                }
+
+                progress += 25;
+                updateLoadingProgress(progress);
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            // Sort by date
+            onlineArticles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            updateLoadingStatus(`${onlineArticles.length} Artikel geladen!`);
+            updateLoadingProgress(100);
+        }
+
+        // ============ KEYWORD EXTRACTION (NO AI) ============
+        const stopWords = new Set([
+            'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'einem', 'einen',
+            'und', 'oder', 'aber', 'doch', 'noch', 'schon', 'auch', 'nur', 'sehr', 'mehr', 'viel',
+            'ist', 'sind', 'war', 'waren', 'wird', 'werden', 'hat', 'haben', 'hatte', 'hatten',
+            'für', 'mit', 'von', 'bei', 'nach', 'vor', 'über', 'unter', 'zwischen', 'durch',
+            'auf', 'aus', 'an', 'in', 'im', 'am', 'zum', 'zur', 'vom', 'beim',
+            'als', 'wie', 'wenn', 'weil', 'dass', 'ob', 'so', 'da', 'es', 'man',
+            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+            'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used',
+            'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into',
+            'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under',
+            'and', 'but', 'or', 'nor', 'so', 'yet', 'both', 'either', 'neither',
+            'not', 'only', 'own', 'same', 'than', 'too', 'very', 'just', 'also',
+            'new', 'says', 'said', 'news', 'report', 'reports', 'update', 'updates'
+        ]);
+
+        const knownEntities = {
+            // Countries
+            countries: ['usa', 'china', 'russia', 'germany', 'france', 'uk', 'japan', 'india', 'brazil', 'canada', 'australia', 'ukraine', 'israel', 'iran', 'saudi', 'turkey', 'mexico', 'korea', 'taiwan', 'grönland', 'greenland', 'europe', 'asia', 'africa', 'nato', 'eu'],
+            // Politicians
+            politicians: ['trump', 'biden', 'putin', 'xi', 'jinping', 'scholz', 'macron', 'modi', 'zelensky', 'netanyahu', 'erdogan', 'musk', 'bezos', 'zuckerberg'],
+            // Companies
+            companies: ['apple', 'google', 'microsoft', 'amazon', 'tesla', 'nvidia', 'meta', 'facebook', 'twitter', 'openai', 'samsung', 'intel', 'amd', 'boeing', 'airbus'],
+            // Finance
+            finance: ['bitcoin', 'crypto', 'btc', 'eth', 'ethereum', 'stock', 'stocks', 'market', 'markets', 'dow', 'nasdaq', 's&p', 'fed', 'federal', 'reserve', 'inflation', 'interest', 'rate', 'rates', 'dollar', 'euro', 'yen', 'gold', 'oil', 'gas'],
+            // Topics
+            topics: ['war', 'krieg', 'military', 'militär', 'election', 'wahl', 'trade', 'handel', 'tariff', 'zoll', 'sanction', 'sanctions', 'nuclear', 'nuklear', 'climate', 'klima', 'energy', 'energie', 'tech', 'ai', 'künstliche', 'intelligenz', 'cyber', 'hack', 'economy', 'wirtschaft', 'recession', 'crisis', 'krise']
+        };
+
+        function extractKeywords(title, description = '') {
+            const text = (title + ' ' + description).toLowerCase();
+            const words = text.match(/[a-zA-ZäöüßÄÖÜ]{3,}/g) || [];
+            const keywords = new Set();
+            
+            // Extract words that are not stopwords
+            words.forEach(word => {
+                if (!stopWords.has(word) && word.length > 3) {
+                    // Check if it's a known entity
+                    for (const [category, entities] of Object.entries(knownEntities)) {
+                        if (entities.some(e => word.includes(e) || e.includes(word))) {
+                            keywords.add(word);
+                            return;
+                        }
+                    }
+                    // Check for capitalized words in original title (proper nouns)
+                    const originalWords = title.split(/\s+/);
+                    originalWords.forEach(ow => {
+                        if (ow.length > 3 && /^[A-ZÄÖÜ]/.test(ow) && ow.toLowerCase() === word) {
+                            keywords.add(word);
+                        }
+                    });
+                }
+            });
+
+            // Also add any known entities found
+            for (const [category, entities] of Object.entries(knownEntities)) {
+                entities.forEach(entity => {
+                    if (text.includes(entity)) {
+                        keywords.add(entity);
+                    }
+                });
+            }
+
+            // Extract numbers with context (percentages, money)
+            const numbers = text.match(/\d+[%$€]|\$\d+|\d+\s*(billion|million|trillion|prozent|percent)/gi) || [];
+            numbers.forEach(n => keywords.add(n.toLowerCase()));
+
+            return Array.from(keywords).slice(0, 40);
+        }
+
+        // ============ SEARCH FUNCTIONALITY ============
+        let currentSearchTerm = '';
+        let allKeywords = new Set();
+
+        function updateSearchTags() {
+            // Collect top keywords from all articles
+            const keywordCounts = {};
+            onlineArticles.forEach(article => {
+                (article.keywords || []).forEach(kw => {
+                    keywordCounts[kw] = (keywordCounts[kw] || 0) + 1;
+                });
+            });
+
+            // Sort by frequency and take top 15
+            const topKeywords = Object.entries(keywordCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15)
+                .map(([kw]) => kw);
+
+            const tagsContainer = document.getElementById('searchTags');
+            tagsContainer.innerHTML = topKeywords.map(kw => 
+                `<span class="search-tag ${currentSearchTerm.toLowerCase() === kw ? 'active' : ''}" data-keyword="${kw}">${kw.toUpperCase()}</span>`
+            ).join('');
+
+            // Add click handlers
+            tagsContainer.querySelectorAll('.search-tag').forEach(tag => {
+                tag.addEventListener('click', () => {
+                    const keyword = tag.dataset.keyword;
+                    if (currentSearchTerm === keyword) {
+                        currentSearchTerm = '';
+                        document.getElementById('searchInput').value = '';
+                    } else {
+                        currentSearchTerm = keyword;
+                        document.getElementById('searchInput').value = keyword;
+                    }
+                    filterArticles();
+                });
+            });
+        }
+
+        function filterArticles() {
+            const searchTerm = currentSearchTerm.toLowerCase().trim();
+            const clearBtn = document.getElementById('searchClear');
+            const resultsEl = document.getElementById('searchResults');
+
+            clearBtn.classList.toggle('show', searchTerm.length > 0);
+
+            if (!searchTerm) {
+                resultsEl.textContent = '';
+                renderOnlineArticles(onlineArticles);
+                updateSearchTags();
+                return;
+            }
+
+            const filtered = onlineArticles.filter(article => {
+                const titleMatch = article.title.toLowerCase().includes(searchTerm);
+                const keywordMatch = (article.keywords || []).some(kw => kw.includes(searchTerm) || searchTerm.includes(kw));
+                return titleMatch || keywordMatch;
+            });
+
+            resultsEl.textContent = `${filtered.length} Artikel gefunden für "${searchTerm}"`;
+            renderOnlineArticles(filtered, searchTerm);
+            updateSearchTags();
+        }
+
+        // Search input handler
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentSearchTerm = e.target.value;
+            filterArticles();
+        });
+
+        document.getElementById('searchClear').addEventListener('click', () => {
+            currentSearchTerm = '';
+            document.getElementById('searchInput').value = '';
+            filterArticles();
+        });
+        // ============ AUTH ============
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                showApp();
-                loadDocuments();
-                setConnectionStatus('connected', 'VERBUNDEN');
+                updateLoadingSource('auth', 'done', 'Authentifiziert');
+                
+                await scrapeAllNews();
+                
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    appContainer.classList.add('show');
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('statusDot').classList.add('connected');
+                    document.getElementById('statusText').textContent = 'VERBUNDEN';
+                    
+                    renderOnlineArticles();
+                    loadSavedArticles();
+                }, 1000);
             } else {
-                currentUser = null;
-                showAuth();
-                setConnectionStatus('error', 'NICHT VERBUNDEN');
+                loadingScreen.classList.add('hidden');
+                authContainer.classList.remove('hidden');
             }
         });
 
-        // ============ AUTH FUNCTIONS ============
-        function showAuth() {
-            authContainer.classList.remove('hidden');
-            appContainer.classList.remove('active');
-        }
-
-        function showApp() {
-            authContainer.classList.add('hidden');
-            appContainer.classList.add('active');
-            userEmailEl.textContent = currentUser.email;
-        }
-
-        function showError(message) {
-            authError.textContent = message;
-            authError.classList.add('show');
-            setTimeout(() => authError.classList.remove('show'), 5000);
-        }
-
-        // Tab Switching
-        authTabs.forEach(tab => {
+        // Auth tabs
+        document.querySelectorAll('.auth-tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                authTabs.forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
                 tab.classList.add('active');
-                
-                const forms = document.querySelectorAll('.auth-form');
-                forms.forEach(f => f.classList.remove('active'));
-                
-                const targetForm = tab.dataset.tab === 'login' ? loginForm : registerForm;
-                targetForm.classList.add('active');
+                document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
             });
         });
 
         // Login
-        loginForm.addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                showError(getErrorMessage(error.code));
+                document.getElementById('loginError').textContent = getErrorMessage(error.code);
             }
         });
 
         // Register
-        registerForm.addEventListener('submit', async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
-            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-
-            if (password !== passwordConfirm) {
-                showError('Passwörter stimmen nicht überein');
-                return;
-            }
-
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                showError(getErrorMessage(error.code));
+                document.getElementById('registerError').textContent = getErrorMessage(error.code);
             }
         });
 
         // Logout
-        logoutBtn.addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
             if (unsubscribe) unsubscribe();
             signOut(auth);
+            appContainer.classList.remove('show');
+            authContainer.classList.remove('hidden');
         });
 
-        // ============ FIRESTORE FUNCTIONS ============
-        function loadDocuments() {
+        // ============ TABS ============
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + 'Content').classList.add('active');
+            });
+        });
+
+        // ============ RENDER FUNCTIONS ============
+        function renderOnlineArticles(articles = onlineArticles, highlightTerm = '') {
+            if (articles.length === 0) {
+                onlineGrid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-text">KEINE ARTIKEL GEFUNDEN</div></div>';
+                return;
+            }
+
+            onlineGrid.innerHTML = articles.map(article => {
+                const keywordsHtml = (article.keywords || []).slice(0, 8).map(kw => {
+                    const isMatch = highlightTerm && (kw.includes(highlightTerm.toLowerCase()) || highlightTerm.toLowerCase().includes(kw));
+                    return `<span class="doc-keyword ${isMatch ? 'match' : ''}">${kw}</span>`;
+                }).join('');
+
+                return `
+                <div class="doc-card online" onclick="window.openViewer('${encodeURIComponent(article.url)}', '${encodeURIComponent(article.title)}', '${encodeURIComponent(article.category)}', '${article.country}', ${article.isBreaking}, '${encodeURIComponent(article.imageUrl || '')}')">
+                    <div class="doc-actions">
+                        <button class="doc-btn save" onclick="event.stopPropagation(); window.saveOnlineArticle('${article.id}')" title="Speichern">💾</button>
+                    </div>
+                    ${article.imageUrl ? `<img src="${article.imageUrl}" class="doc-card-image" onerror="this.outerHTML='<div class=\\'doc-card-placeholder\\'>📰</div>'">` : '<div class="doc-card-placeholder">📰</div>'}
+                    <div class="doc-card-body">
+                        <div class="doc-category">
+                            <span class="online-badge">LIVE</span>
+                            ${article.category}
+                        </div>
+                        <div class="doc-title">${article.title}</div>
+                        <div class="doc-meta">
+                            <span>${article.source}</span>
+                            <span>${formatTime(article.createdAt)}</span>
+                        </div>
+                        <div class="doc-keywords">${keywordsHtml}</div>
+                    </div>
+                </div>
+            `}).join('');
+
+            document.getElementById('onlineCount').textContent = onlineArticles.length;
+            document.getElementById('statOnline').textContent = onlineArticles.length;
+            updateTotalStats();
+            updateSearchTags();
+        }
+
+        function renderSavedArticles() {
+            if (savedArticles.length === 0) {
+                savedGrid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">KEINE GESPEICHERTEN ARTIKEL</div></div>';
+                return;
+            }
+
+            savedGrid.innerHTML = savedArticles.map(article => `
+                <div class="doc-card" onclick="window.openViewer('${encodeURIComponent(article.url)}', '${encodeURIComponent(article.title)}', '${encodeURIComponent(article.category || '')}', '${article.country || ''}', ${article.isBreaking || false}, '${encodeURIComponent(article.imageUrl || '')}')">
+                    <div class="doc-actions">
+                        <button class="doc-btn delete" onclick="event.stopPropagation(); window.deleteArticle('${article.id}')" title="Löschen">×</button>
+                    </div>
+                    ${article.imageUrl ? `<img src="${article.imageUrl}" class="doc-card-image" onerror="this.outerHTML='<div class=\\'doc-card-placeholder\\'>📰</div>'">` : '<div class="doc-card-placeholder">📰</div>'}
+                    <div class="doc-card-body">
+                        <div class="doc-category">
+                            ${article.isBreaking ? '<span class="breaking">⚡ EILMELDUNG</span>' : ''}
+                            ${article.category || 'ARTIKEL'}
+                        </div>
+                        <div class="doc-title">${article.title}</div>
+                        <div class="doc-meta">
+                            <span>${getDomain(article.url)}</span>
+                            <span>${formatDate(article.createdAt)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('savedCount').textContent = savedArticles.length;
+            document.getElementById('statSaved').textContent = savedArticles.length;
+            updateTotalStats();
+        }
+
+        function updateTotalStats() {
+            document.getElementById('statTotal').textContent = onlineArticles.length + savedArticles.length;
+            document.getElementById('statSync').textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ============ SAVED ARTICLES ============
+        function loadSavedArticles() {
             const q = query(
                 collection(db, 'documents'),
                 where('userId', '==', currentUser.uid),
                 orderBy('createdAt', 'desc')
             );
 
-            // Real-time listener
             unsubscribe = onSnapshot(q, (snapshot) => {
-                const docs = [];
-                snapshot.forEach(doc => {
-                    docs.push({ id: doc.id, ...doc.data() });
-                });
-                renderDocuments(docs);
-                updateStats(docs);
-                statSync.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            }, (error) => {
-                console.error('Firestore error:', error);
-                setConnectionStatus('error', 'FEHLER');
+                savedArticles = [];
+                snapshot.forEach(doc => savedArticles.push({ id: doc.id, ...doc.data() }));
+                renderSavedArticles();
             });
         }
 
-        function renderDocuments(docs) {
-            if (docs.length === 0) {
-                documentsGrid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
-                        <div class="empty-state-icon">📰</div>
-                        <div class="empty-state-text">KEINE ARTIKEL VORHANDEN</div>
-                    </div>
-                `;
-                return;
-            }
+        // ============ GLOBAL FUNCTIONS ============
+        window.openViewer = function(url, title, category, country, isBreaking, image) {
+            const params = new URLSearchParams({ url, title, category, country, breaking: isBreaking, image });
+            window.open(`viewer.html?${params.toString()}`, '_blank');
+        };
 
-            documentsGrid.innerHTML = docs.map(doc => `
-                <div class="doc-card" data-id="${doc.id}">
-                    <button class="doc-delete" onclick="deleteDocument('${doc.id}')">&times;</button>
-                    <a href="${doc.url}" target="_blank">
-                        ${doc.imageUrl 
-                            ? `<img src="${doc.imageUrl}" class="doc-card-image" alt="${doc.title}" onerror="this.outerHTML='<div class=\\'doc-card-placeholder\\'>📰</div>'">`
-                            : `<div class="doc-card-placeholder">📰</div>`
-                        }
-                        <div class="doc-category">${doc.category || 'ARTIKEL'}</div>
-                        <div class="doc-title">${doc.title}</div>
-                    </a>
-                    <div class="doc-meta">
-                        <span>${getDomain(doc.url)}</span>
-                        <span>${formatDate(doc.createdAt)}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function getDomain(url) {
-            try {
-                return new URL(url).hostname.replace('www.', '');
-            } catch {
-                return '-';
-            }
-        }
-
-        function updateStats(docs) {
-            statDocs.textContent = docs.length;
-            
-            // Count unique categories
-            const categories = new Set(docs.map(d => d.category).filter(Boolean));
-            statFolders.textContent = categories.size;
-            
-            // Show "Artikel" instead of MB
-            statSize.textContent = docs.length === 1 ? '1' : docs.length;
-        }
-
-        // Add Document
-        addDocBtn.addEventListener('click', () => {
-            addModal.classList.add('show');
-        });
-
-        modalClose.addEventListener('click', () => {
-            addModal.classList.remove('show');
-        });
-
-        addModal.addEventListener('click', (e) => {
-            if (e.target === addModal) addModal.classList.remove('show');
-        });
-
-        // ============ ADD ARTICLE ============
-        addDocForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const url = document.getElementById('articleUrl').value;
-            const title = document.getElementById('articleTitle').value;
-            const country = document.getElementById('articleCountry').value;
-            const category = document.getElementById('articleCategory').value;
-            const imageUrl = document.getElementById('articleImage').value || '';
-            const isBreaking = document.getElementById('articleBreaking').checked;
+        window.saveOnlineArticle = async function(articleId) {
+            const article = onlineArticles.find(a => a.id === articleId);
+            if (!article) return;
 
             try {
                 await addDoc(collection(db, 'documents'), {
-                    url,
-                    title,
-                    country,
-                    category,
-                    imageUrl,
-                    isBreaking,
+                    url: article.url,
+                    title: article.title,
+                    category: article.category,
+                    country: article.country,
+                    imageUrl: article.imageUrl || '',
+                    isBreaking: false,
                     userId: currentUser.uid,
                     createdAt: serverTimestamp()
                 });
-                
-                addModal.classList.remove('show');
-                addDocForm.reset();
-            } catch (error) {
-                console.error('Error adding article:', error);
-                alert('Fehler beim Speichern: ' + error.message);
-            }
-        });
-
-        // Delete Document - Make globally accessible
-        window.deleteDocument = async function(docId) {
-            if (!confirm('Artikel wirklich löschen?')) return;
-            
-            try {
-                await deleteDoc(doc(db, 'documents', docId));
-            } catch (error) {
-                console.error('Error deleting:', error);
-                alert('Fehler beim Löschen');
+                alert('Artikel gespeichert!');
+            } catch (e) {
+                console.error('Save error:', e);
+                alert('Fehler beim Speichern');
             }
         };
 
+        window.deleteArticle = async function(articleId) {
+            if (!confirm('Artikel wirklich löschen?')) return;
+            try {
+                await deleteDoc(doc(db, 'documents', articleId));
+            } catch (e) {
+                console.error('Delete error:', e);
+            }
+        };
+
+        // ============ REFRESH ============
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            onlineGrid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            await scrapeAllNews();
+            renderOnlineArticles();
+        });
+
+        // ============ ADD MODAL ============
+        document.getElementById('addDocBtn').addEventListener('click', () => {
+            document.getElementById('addModal').classList.add('show');
+        });
+
+        document.getElementById('modalClose').addEventListener('click', () => {
+            document.getElementById('addModal').classList.remove('show');
+        });
+
+        document.getElementById('addDocForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await addDoc(collection(db, 'documents'), {
+                    url: document.getElementById('articleUrl').value,
+                    title: document.getElementById('articleTitle').value,
+                    country: document.getElementById('articleCountry').value,
+                    category: document.getElementById('articleCategory').value,
+                    imageUrl: document.getElementById('articleImage').value || '',
+                    isBreaking: document.getElementById('articleBreaking').checked,
+                    userId: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                document.getElementById('addModal').classList.remove('show');
+                document.getElementById('addDocForm').reset();
+            } catch (e) {
+                console.error('Add error:', e);
+            }
+        });
+
         // ============ HELPERS ============
+        function formatTime(date) {
+            if (!date) return '-';
+            const d = date instanceof Date ? date : new Date(date);
+            const now = new Date();
+            const diff = Math.floor((now - d) / 1000 / 60);
+            if (diff < 60) return `vor ${diff}m`;
+            if (diff < 1440) return `vor ${Math.floor(diff / 60)}h`;
+            return d.toLocaleDateString('de-DE');
+        }
+
         function formatDate(timestamp) {
             if (!timestamp) return '-';
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             return date.toLocaleDateString('de-DE');
         }
 
-        function setConnectionStatus(status, text) {
-            statusDot.className = 'status-dot ' + status;
-            statusText.textContent = text;
+        function getDomain(url) {
+            try { return new URL(url).hostname.replace('www.', ''); }
+            catch { return '-'; }
         }
 
         function getErrorMessage(code) {
-            const messages = {
+            const msgs = {
                 'auth/email-already-in-use': 'E-Mail wird bereits verwendet',
-                'auth/invalid-email': 'Ungültige E-Mail-Adresse',
-                'auth/weak-password': 'Passwort zu schwach (min. 6 Zeichen)',
+                'auth/invalid-email': 'Ungültige E-Mail',
+                'auth/weak-password': 'Passwort zu schwach',
                 'auth/user-not-found': 'Benutzer nicht gefunden',
-                'auth/wrong-password': 'Falsches Passwort',
-                'auth/invalid-credential': 'Ungültige Anmeldedaten'
+                'auth/wrong-password': 'Falsches Passwort'
             };
-            return messages[code] || 'Ein Fehler ist aufgetreten';
+            return msgs[code] || 'Fehler aufgetreten';
         }
-
-        // Initial connection status
-        setConnectionStatus('', 'VERBINDE...');
     </script>
 </body>
 </html>

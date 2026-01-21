@@ -984,7 +984,8 @@
         function loadArticles() {
             const q = query(
                 collection(db, 'documents'),
-                where('userId', '==', currentUser.uid)
+                where('userId', '==', currentUser.uid),
+                orderBy('createdAt', 'desc')
             );
 
             onSnapshot(q, (snapshot) => {
@@ -992,23 +993,13 @@
                 snapshot.forEach(doc => {
                     allArticles.push({ id: doc.id, ...doc.data() });
                 });
-
-                // Sortierung client-seitig (verhindert Index-Fehler)
-                allArticles.sort((a, b) => {
-                    const timeA = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
-                    const timeB = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
-                    return timeB - timeA;
-                });
                 
                 // Group by country (convert 2-letter to 3-letter code)
                 countryArticles = {};
                 allArticles.forEach(article => {
                     if (!article.country) return;
                     const code3 = countryCodeMap[article.country];
-                    if (!code3) {
-                        if (article.country !== 'GLOBAL') console.warn('Unmapped country:', article.country);
-                        return;
-                    }
+                    if (!code3) return;
                     
                     if (!countryArticles[code3]) {
                         countryArticles[code3] = [];
@@ -1019,8 +1010,6 @@
                 updateCountryStyles();
                 updateStats();
                 updateBreakingTicker();
-            }, (error) => {
-                console.error("Error loading articles:", error);
             });
         }
 
