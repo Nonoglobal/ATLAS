@@ -2,1112 +2,876 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS // ARCHIVES</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ATLAS // AI ASSISTANT</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: 'Share Tech Mono', monospace; min-height: 100vh; overflow-x: hidden; }
         
-        .grid-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: 0; }
+        :root {
+            --bg: #000;
+            --surface: #0a0a0f;
+            --border: #1a1a1a;
+            --text: #fff;
+            --text-dim: #666;
+            --accent: #4ade80;
+            --accent-dim: rgba(74, 222, 128, 0.2);
+            --danger: #ff6b6b;
+        }
 
-        /* ============ LOADING SCREEN ============ */
-        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s; }
-        .loading-screen.hidden { opacity: 0; pointer-events: none; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            height: 60px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            transition: all 0.3s;
+        }
+
+        .status-dot.online { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .status-dot.listening { background: var(--danger); box-shadow: 0 0 10px var(--danger); animation: pulse 0.5s infinite; }
+        .status-dot.thinking { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Main Chat Area */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .messages::-webkit-scrollbar { width: 4px; }
+        .messages::-webkit-scrollbar-thumb { background: var(--border); }
+
+        /* Welcome Screen */
+        .welcome {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 64px;
+            font-weight: 900;
+            letter-spacing: 15px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: glow 3s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .welcome-sub {
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+        }
+
+        .welcome-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            margin-bottom: 30px;
+        }
+
+        .welcome-status .status-dot { background: var(--accent); }
+        .welcome-hint {
+            font-size: 12px;
+            color: var(--text-dim);
+            max-width: 400px;
+            line-height: 1.8;
+        }
+
+        /* Messages */
+        .message {
+            display: flex;
+            gap: 15px;
+            max-width: 85%;
+            animation: msgIn 0.3s ease;
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user { margin-left: auto; flex-direction: row-reverse; }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.atlas .message-avatar {
+            background: linear-gradient(135deg, #1a1a3a 0%, #0a2a1a 100%);
+            border: 1px solid var(--accent);
+        }
+
+        .message.user .message-avatar {
+            background: var(--border);
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .message-sender {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        .message-bubble {
+            padding: 15px 20px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-bubble {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+        }
+
+        .message.atlas .message-bubble {
+            background: linear-gradient(135deg, rgba(26,26,58,0.5) 0%, rgba(10,42,26,0.5) 100%);
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+
+        /* Typing Indicator */
+        .typing {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .typing.show { display: flex; }
+
+        .typing-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+        }
+
+        .typing-text {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .voice-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--text-dim);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .voice-btn:hover { border-color: var(--accent); color: var(--accent); }
         
-        .loading-logo { font-family: 'Orbitron', sans-serif; font-size: 64px; font-weight: 900; letter-spacing: 15px; margin-bottom: 10px; animation: glitch 2s infinite; }
-        @keyframes glitch { 0%,90%,100% { transform: translate(0); } 92% { transform: translate(-3px, 1px); } 94% { transform: translate(3px, -1px); } 96% { transform: translate(-1px, -2px); } }
-        
-        .loading-subtitle { font-size: 10px; letter-spacing: 5px; color: #444; margin-bottom: 50px; }
-        .loading-status { font-size: 11px; color: #666; margin-bottom: 20px; letter-spacing: 2px; }
-        
-        .loading-progress-bar { width: 300px; height: 2px; background: #1a1a1a; margin-bottom: 30px; overflow: hidden; }
-        .loading-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.3s; }
-        
-        .loading-sources { display: flex; flex-direction: column; gap: 8px; width: 320px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
-        .loading-sources::-webkit-scrollbar { width: 4px; }
-        .loading-sources::-webkit-scrollbar-track { background: #111; }
-        .loading-sources::-webkit-scrollbar-thumb { background: #333; }
-        .loading-source { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; flex-shrink: 0; }
-        .loading-source.active { border-color: #333; background: rgba(255,255,255,0.05); }
-        .loading-source.done { border-color: #4ade80; background: rgba(74,222,128,0.1); }
-        .loading-source.error { border-color: #ff6b6b; opacity: 0.5; }
-        .loading-source-icon { font-size: 14px; }
-        .loading-source-name { font-size: 9px; letter-spacing: 1px; flex: 1; }
-        .loading-source-status { font-size: 8px; color: #666; }
-        .loading-source.active .loading-source-status { color: #888; }
-        .loading-source.done .loading-source-status { color: #4ade80; }
+        .voice-btn.listening {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: rgba(255, 107, 107, 0.2);
+            animation: voicePulse 1s infinite;
+        }
 
-        /* ============ AUTH SCREEN ============ */
-        .auth-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 1000; background: #000; }
-        .auth-container.hidden { display: none; }
-        .auth-box { background: rgba(10,10,15,0.95); border: 1px solid #222; padding: 50px; width: 100%; max-width: 420px; position: relative; }
-        .auth-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #fff, transparent); }
-        .auth-logo { font-family: 'Orbitron', sans-serif; font-size: 48px; font-weight: 900; text-align: center; letter-spacing: 10px; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #666 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .auth-subtitle { text-align: center; font-size: 10px; letter-spacing: 5px; color: #444; margin-bottom: 40px; }
-        .auth-tabs { display: flex; margin-bottom: 30px; border-bottom: 1px solid #222; }
-        .auth-tab { flex: 1; padding: 15px; background: none; border: none; color: #444; font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 3px; cursor: pointer; transition: all 0.3s; }
-        .auth-tab.active { color: #fff; border-bottom: 2px solid #fff; }
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 10px; letter-spacing: 3px; color: #666; margin-bottom: 8px; }
-        .form-group input { width: 100%; padding: 15px; background: #0a0a0f; border: 1px solid #222; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 14px; transition: border-color 0.3s; }
-        .form-group input:focus { outline: none; border-color: #444; }
-        .auth-btn { width: 100%; padding: 18px; background: #fff; color: #000; border: none; font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 5px; cursor: pointer; margin-top: 10px; transition: all 0.3s; }
-        .auth-btn:hover { background: #ccc; }
-        .auth-error { color: #ff6b6b; font-size: 11px; margin-top: 15px; text-align: center; min-height: 20px; }
+        @keyframes voicePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 5px rgba(255, 107, 107, 0.3); }
+        }
 
-        /* ============ MAIN APP ============ */
-        .app-container { display: none; position: relative; z-index: 1; }
-        .app-container.show { display: block; }
-        
-        .header { background: rgba(0,0,0,0.95); border-bottom: 1px solid #1a1a1a; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .header-left { display: flex; align-items: center; gap: 30px; }
-        .logo { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900; letter-spacing: 5px; }
-        .nav-btn { padding: 10px 20px; background: none; border: 1px solid #222; color: #666; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-decoration: none; }
-        .nav-btn:hover { border-color: #fff; color: #fff; }
-        .header-right { display: flex; align-items: center; gap: 20px; }
-        .user-email { font-size: 10px; color: #666; letter-spacing: 2px; }
-        .logout-btn { padding: 10px 20px; background: none; border: 1px solid #333; color: #666; font-size: 10px; letter-spacing: 2px; cursor: pointer; font-family: 'Share Tech Mono', monospace; }
-        .logout-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
+        .text-input {
+            flex: 1;
+            padding: 18px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
 
-        main { padding: 40px; max-width: 1600px; margin: 0 auto; }
-        
-        /* Tabs */
-        .tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 1px solid #1a1a1a; }
-        .tab { padding: 15px 30px; background: none; border: none; color: #444; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; cursor: pointer; position: relative; transition: color 0.3s; }
-        .tab.active { color: #fff; }
-        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #fff; }
-        .tab-badge { background: #333; color: #888; padding: 2px 8px; border-radius: 10px; font-size: 9px; margin-left: 10px; }
-        .tab.active .tab-badge { background: #fff; color: #000; }
-        .tab-badge.online { background: #4ade80; color: #000; }
+        .text-input:focus { outline: none; border-color: var(--accent); }
+        .text-input::placeholder { color: var(--text-dim); }
 
-        /* Stats */
-        .stats-bar { display: flex; gap: 30px; margin-bottom: 30px; padding: 20px 0; border-bottom: 1px solid #1a1a1a; }
-        .stat-box { text-align: center; }
-        .stat-value { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 700; }
-        .stat-label { font-size: 9px; letter-spacing: 2px; color: #444; margin-top: 5px; }
+        .send-btn {
+            padding: 18px 30px;
+            background: var(--accent);
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
 
-        /* Section */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .section-title { font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 5px; }
-        .add-btn { padding: 12px 25px; background: #fff; color: #000; border: none; font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; cursor: pointer; transition: all 0.3s; }
-        .add-btn:hover { background: #ccc; }
+        .send-btn:hover { background: #22c55e; }
+        .send-btn:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
 
-        /* Documents Grid */
-        .documents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* Voice Visualization Overlay */
+        .voice-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
 
-        /* Document Card */
-        .doc-card { background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; position: relative; transition: all 0.3s; cursor: pointer; overflow: hidden; }
-        .doc-card:hover { border-color: #333; transform: translateY(-2px); }
-        .doc-card.online { border-color: #1a3a1a; }
-        .doc-card.online:hover { border-color: #4ade80; }
-        
-        .doc-card-image { width: 100%; height: 160px; object-fit: cover; filter: grayscale(30%); transition: filter 0.3s; }
-        .doc-card:hover .doc-card-image { filter: grayscale(0%); }
-        .doc-card-placeholder { width: 100%; height: 160px; background: linear-gradient(135deg, #111 0%, #1a1a2e 100%); display: flex; align-items: center; justify-content: center; font-size: 40px; opacity: 0.3; }
-        
-        .doc-card-body { padding: 20px; }
-        .doc-category { font-size: 9px; letter-spacing: 2px; color: #666; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .doc-category .breaking { background: #ff3333; color: #fff; padding: 2px 6px; font-size: 8px; }
-        .doc-category .online-badge { background: #4ade80; color: #000; padding: 2px 6px; font-size: 8px; }
-        .doc-title { font-size: 14px; line-height: 1.4; color: #fff; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .doc-meta { font-size: 10px; color: #444; display: flex; justify-content: space-between; align-items: center; }
-        
-        .doc-actions { display: flex; gap: 5px; position: absolute; top: 10px; right: 10px; }
-        .doc-btn { width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.8); border: 1px solid #333; color: #666; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; opacity: 0; }
-        .doc-card:hover .doc-btn { opacity: 1; }
-        .doc-btn:hover { border-color: #fff; color: #fff; }
-        .doc-btn.save:hover { border-color: #4ade80; color: #4ade80; }
-        .doc-btn.delete:hover { border-color: #ff6b6b; color: #ff6b6b; }
+        .voice-overlay.show { display: flex; }
 
-        /* Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.3s; }
-        .modal-overlay.show { opacity: 1; visibility: visible; }
-        .modal { background: #0a0a0f; border: 1px solid #222; padding: 40px; width: 100%; max-width: 500px; position: relative; }
-        .modal-title { font-family: 'Orbitron', sans-serif; font-size: 16px; letter-spacing: 5px; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #222; }
-        .modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #444; font-size: 24px; cursor: pointer; }
-        .modal-close:hover { color: #fff; }
-        
-        .form-group select { width: 100%; padding: 15px; background: #0a0a0f; border: 1px solid #222; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; }
-        .form-group select:focus { outline: none; border-color: #444; }
-        
-        .checkbox-group { margin-top: 20px; }
-        .checkbox-label { display: flex; align-items: center; cursor: pointer; gap: 12px; }
-        .checkbox-label input { display: none; }
-        .checkbox-custom { width: 20px; height: 20px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-        .checkbox-label input:checked + .checkbox-custom { background: #ff3333; border-color: #ff3333; }
-        .checkbox-label input:checked + .checkbox-custom::after { content: '✓'; color: #fff; font-size: 12px; }
-        .checkbox-text { font-size: 11px; letter-spacing: 2px; color: #888; }
+        .voice-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
 
-        /* Connection Status */
-        .connection-status { position: fixed; bottom: 20px; right: 20px; display: flex; align-items: center; gap: 10px; font-size: 9px; letter-spacing: 2px; color: #444; z-index: 100; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; }
-        .status-dot.connected { background: #4ade80; }
+        .voice-bar {
+            width: 6px;
+            height: 40px;
+            background: var(--danger);
+            animation: voiceBar 0.5s infinite alternate;
+        }
 
-        /* Empty State */
-        .empty-state { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #333; }
-        .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
-        .empty-state-text { font-size: 12px; letter-spacing: 3px; }
+        .voice-bar:nth-child(2) { animation-delay: 0.1s; height: 60px; }
+        .voice-bar:nth-child(3) { animation-delay: 0.2s; height: 80px; }
+        .voice-bar:nth-child(4) { animation-delay: 0.3s; height: 60px; }
+        .voice-bar:nth-child(5) { animation-delay: 0.4s; height: 40px; }
 
-        /* Search */
-        .search-container { margin-bottom: 25px; }
-        .search-box { display: flex; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; padding: 0 15px; transition: border-color 0.3s; }
-        .search-box:focus-within { border-color: #444; }
-        .search-icon { font-size: 16px; margin-right: 10px; opacity: 0.5; }
-        .search-box input { flex: 1; padding: 15px 0; background: none; border: none; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 13px; }
-        .search-box input:focus { outline: none; }
-        .search-box input::placeholder { color: #444; }
-        .search-clear { background: none; border: none; color: #444; font-size: 20px; cursor: pointer; padding: 10px; display: none; }
-        .search-clear.show { display: block; }
-        .search-clear:hover { color: #fff; }
-        
-        .search-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-        .search-tag { padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid #222; font-size: 10px; letter-spacing: 1px; color: #888; cursor: pointer; transition: all 0.3s; }
-        .search-tag:hover { border-color: #444; color: #fff; }
-        .search-tag.active { background: #fff; color: #000; border-color: #fff; }
-        
-        .search-results { margin-top: 10px; font-size: 11px; color: #666; letter-spacing: 1px; min-height: 20px; }
+        @keyframes voiceBar {
+            0% { transform: scaleY(0.5); opacity: 0.5; }
+            100% { transform: scaleY(1); opacity: 1; }
+        }
 
-        /* Keyword Tags on Cards */
-        .doc-keywords { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-        .doc-keyword { padding: 2px 6px; background: rgba(255,255,255,0.05); font-size: 8px; letter-spacing: 1px; color: #666; }
-        .doc-keyword.match { background: rgba(74,222,128,0.2); color: #4ade80; }
+        .voice-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: var(--danger);
+            margin-bottom: 10px;
+        }
 
-        /* Spinner */
-        .loading { display: flex; justify-content: center; align-items: center; padding: 40px; grid-column: 1/-1; }
-        .spinner { width: 40px; height: 40px; border: 2px solid #222; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .voice-transcript {
+            font-size: 18px;
+            color: var(--text);
+            max-width: 80%;
+            text-align: center;
+            min-height: 30px;
+        }
+
+        .voice-cancel {
+            margin-top: 40px;
+            padding: 15px 30px;
+            background: none;
+            border: 1px solid var(--text-dim);
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            cursor: pointer;
+        }
+
+        .voice-cancel:hover { border-color: var(--text); color: var(--text); }
+
+        /* Connection Error */
+        .error-banner {
+            display: none;
+            padding: 15px 20px;
+            background: rgba(255, 107, 107, 0.2);
+            border-bottom: 1px solid var(--danger);
+            color: var(--danger);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .error-banner.show { display: block; }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .header { padding: 0 15px; height: 50px; }
+            .logo { font-size: 18px; letter-spacing: 3px; }
+            .status { display: none; }
+            .welcome-logo { font-size: 36px; letter-spacing: 8px; }
+            .welcome-sub { font-size: 9px; letter-spacing: 3px; }
+            .messages { padding: 15px; }
+            .message { max-width: 95%; }
+            .input-area { padding: 15px; }
+            .voice-btn { width: 48px; height: 48px; font-size: 20px; }
+            .text-input { padding: 15px; font-size: 16px; }
+            .send-btn { padding: 15px 20px; font-size: 10px; }
+        }
     </style>
 </head>
 <body>
-    <div class="grid-bg"></div>
-
-    <!-- ============ LOADING SCREEN ============ -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-logo">ATLAS</div>
-        <div class="loading-subtitle">LIBRARY ARCHIVES SYSTEM</div>
-        <div class="loading-status" id="loadingStatusText">Initialisiere System...</div>
-        <div class="loading-progress-bar">
-            <div class="loading-progress-fill" id="loadingProgressFill"></div>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">ATLAS</div>
+            <div class="status" id="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">VERBINDE...</span>
+            </div>
         </div>
-        <div class="loading-sources" id="loadingSources">
-            <div class="loading-source" data-source="auth">
-                <div class="loading-source-icon">🔐</div>
-                <div class="loading-source-name">AUTHENTICATION</div>
-                <div class="loading-source-status">Wartend...</div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="clearChat()" title="Chat löschen">🗑️</button>
+            <button class="icon-btn" onclick="toggleSettings()" title="Einstellungen">⚙️</button>
+        </div>
+    </header>
+
+    <!-- Error Banner -->
+    <div class="error-banner" id="errorBanner">
+        Verbindung zum Server fehlgeschlagen. Versuche erneut...
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <!-- Welcome Screen -->
+            <div class="welcome" id="welcome">
+                <div class="welcome-logo">ATLAS</div>
+                <div class="welcome-sub">ADVANCED TACTICAL LIBRARY & ASSISTANT SYSTEM</div>
+                <div class="welcome-status">
+                    <div class="status-dot online"></div>
+                    <span>SYSTEM BEREIT</span>
+                </div>
+                <div class="welcome-hint">
+                    Ich bin ATLAS, dein persönlicher KI-Assistent.<br><br>
+                    Sprich mit mir über das Mikrofon 🎤<br>
+                    oder tippe deine Nachricht ein.
+                </div>
             </div>
-            <div class="loading-source" data-source="tagesschau">
-                <div class="loading-source-icon">🇩🇪</div>
-                <div class="loading-source-name">TAGESSCHAU</div>
-                <div class="loading-source-status">Wartend...</div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing" id="typing">
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
             </div>
-            <div class="loading-source" data-source="zeit">
-                <div class="loading-source-icon">🇩🇪</div>
-                <div class="loading-source-name">DIE ZEIT</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="bild">
-                <div class="loading-source-icon">🇩🇪</div>
-                <div class="loading-source-name">BILD</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="dw">
-                <div class="loading-source-icon">🇩🇪</div>
-                <div class="loading-source-name">DEUTSCHE WELLE</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="cnn">
-                <div class="loading-source-icon">🇺🇸</div>
-                <div class="loading-source-name">CNN</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="nbc">
-                <div class="loading-source-icon">🇺🇸</div>
-                <div class="loading-source-name">NBC NEWS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="cbs">
-                <div class="loading-source-icon">🇺🇸</div>
-                <div class="loading-source-name">CBS NEWS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="wapo">
-                <div class="loading-source-icon">🇺🇸</div>
-                <div class="loading-source-name">WASHINGTON POST</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="npr">
-                <div class="loading-source-icon">🇺🇸</div>
-                <div class="loading-source-name">NPR</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="pbs">
-                <div class="loading-source-icon">🇺🇸</div>
-                <div class="loading-source-name">PBS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="reuters">
-                <div class="loading-source-icon">🌍</div>
-                <div class="loading-source-name">REUTERS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="bbc">
-                <div class="loading-source-icon">🇬🇧</div>
-                <div class="loading-source-name">BBC NEWS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="france24">
-                <div class="loading-source-icon">🇫🇷</div>
-                <div class="loading-source-name">FRANCE 24</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="euronews">
-                <div class="loading-source-icon">🇪🇺</div>
-                <div class="loading-source-name">EURONEWS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="nzz">
-                <div class="loading-source-icon">🇨🇭</div>
-                <div class="loading-source-name">NZZ</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="orf">
-                <div class="loading-source-icon">🇦🇹</div>
-                <div class="loading-source-name">ORF</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="rai">
-                <div class="loading-source-icon">🇮🇹</div>
-                <div class="loading-source-name">RAI NEWS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="rtve">
-                <div class="loading-source-icon">🇪🇸</div>
-                <div class="loading-source-name">RTVE</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
-            <div class="loading-source" data-source="rte">
-                <div class="loading-source-icon">🇮🇪</div>
-                <div class="loading-source-name">RTÉ NEWS</div>
-                <div class="loading-source-status">Wartend...</div>
-            </div>
+            <span class="typing-text">ATLAS DENKT...</span>
         </div>
     </div>
 
-    <!-- ============ AUTH SCREEN ============ -->
-    <div class="auth-container hidden" id="authContainer">
-        <div class="auth-box">
-            <div class="auth-logo">ATLAS</div>
-            <div class="auth-subtitle">LIBRARY ARCHIVES SYSTEM</div>
-            <div class="auth-tabs">
-                <button class="auth-tab active" data-tab="login">ANMELDEN</button>
-                <button class="auth-tab" data-tab="register">REGISTRIEREN</button>
-            </div>
-            <form class="auth-form active" id="loginForm">
-                <div class="form-group">
-                    <label>E-MAIL</label>
-                    <input type="email" id="loginEmail" required>
-                </div>
-                <div class="form-group">
-                    <label>PASSWORT</label>
-                    <input type="password" id="loginPassword" required>
-                </div>
-                <button type="submit" class="auth-btn">EINLOGGEN</button>
-                <div class="auth-error" id="loginError"></div>
-            </form>
-            <form class="auth-form" id="registerForm">
-                <div class="form-group">
-                    <label>E-MAIL</label>
-                    <input type="email" id="registerEmail" required>
-                </div>
-                <div class="form-group">
-                    <label>PASSWORT</label>
-                    <input type="password" id="registerPassword" required>
-                </div>
-                <button type="submit" class="auth-btn">REGISTRIEREN</button>
-                <div class="auth-error" id="registerError"></div>
-            </form>
+    <!-- Input Area -->
+    <div class="input-area">
+        <div class="input-container">
+            <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="Sprachsteuerung">
+                🎤
+            </button>
+            <input 
+                type="text" 
+                class="text-input" 
+                id="textInput" 
+                placeholder="Schreibe eine Nachricht..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                SENDEN
+            </button>
         </div>
     </div>
 
-    <!-- ============ MAIN APP ============ -->
-    <div class="app-container" id="appContainer">
-        <header class="header">
-            <div class="header-left">
-                <div class="logo">ATLAS</div>
-                <a href="map.html" class="nav-btn">🌍 WELTKARTE</a>
-                <a href="scraper.html" class="nav-btn">📡 SCRAPER</a>
-            </div>
-            <div class="header-right">
-                <span class="user-email" id="userEmail"></span>
-                <button class="logout-btn" id="logoutBtn">LOGOUT</button>
-            </div>
-        </header>
-
-        <main>
-            <!-- Tabs -->
-            <div class="tabs">
-                <button class="tab active" data-tab="online">
-                    LIVE FEED
-                    <span class="tab-badge online" id="onlineCount">0</span>
-                </button>
-                <button class="tab" data-tab="saved">
-                    GESPEICHERT
-                    <span class="tab-badge" id="savedCount">0</span>
-                </button>
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-bar">
-                <div class="stat-box">
-                    <div class="stat-value" id="statTotal">0</div>
-                    <div class="stat-label">GESAMT</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="statOnline">0</div>
-                    <div class="stat-label">LIVE</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="statSaved">0</div>
-                    <div class="stat-label">GESPEICHERT</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="statSync">--:--</div>
-                    <div class="stat-label">LETZTER SYNC</div>
-                </div>
-            </div>
-
-            <!-- Online Tab Content -->
-            <div class="tab-content active" id="onlineContent">
-                <div class="section-header">
-                    <h2 class="section-title">LIVE NEWS FEED</h2>
-                    <button class="add-btn" id="refreshBtn">↻ REFRESH</button>
-                </div>
-                
-                <!-- Search Bar -->
-                <div class="search-container">
-                    <div class="search-box">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="searchInput" placeholder="Suche nach Schlagwörtern... (z.B. Grönland, Trump, Bitcoin)">
-                        <button class="search-clear" id="searchClear">×</button>
-                    </div>
-                    <div class="search-tags" id="searchTags"></div>
-                    <div class="search-results" id="searchResults"></div>
-                </div>
-
-                <div class="documents-grid" id="onlineGrid">
-                    <div class="loading"><div class="spinner"></div></div>
-                </div>
-            </div>
-
-            <!-- Saved Tab Content -->
-            <div class="tab-content" id="savedContent">
-                <div class="section-header">
-                    <h2 class="section-title">GESPEICHERTE ARTIKEL</h2>
-                    <button class="add-btn" id="addDocBtn">+ HINZUFÜGEN</button>
-                </div>
-                <div class="documents-grid" id="savedGrid">
-                    <div class="loading"><div class="spinner"></div></div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- ============ ADD ARTICLE MODAL ============ -->
-    <div class="modal-overlay" id="addModal">
-        <div class="modal">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <h3 class="modal-title">NEUER ARTIKEL</h3>
-            <form id="addDocForm">
-                <div class="form-group">
-                    <label>ARTIKEL-LINK</label>
-                    <input type="url" id="articleUrl" placeholder="https://..." required>
-                </div>
-                <div class="form-group">
-                    <label>TITEL</label>
-                    <input type="text" id="articleTitle" placeholder="Titel des Artikels" required>
-                </div>
-                <div class="form-group">
-                    <label>LAND</label>
-                    <select id="articleCountry" required>
-                        <option value="">Land wählen...</option>
-                        <option value="GLOBAL">Global / Weltweit</option>
-                        <option value="DE">Deutschland</option>
-                        <option value="AT">Österreich</option>
-                        <option value="CH">Schweiz</option>
-                        <option value="US">USA</option>
-                        <option value="GB">Großbritannien</option>
-                        <option value="FR">Frankreich</option>
-                        <option value="RU">Russland</option>
-                        <option value="CN">China</option>
-                        <option value="JP">Japan</option>
-                        <option value="IN">Indien</option>
-                        <option value="UA">Ukraine</option>
-                        <option value="IL">Israel</option>
-                        <option value="IR">Iran</option>
-                        <option value="SA">Saudi-Arabien</option>
-                        <option value="TR">Türkei</option>
-                        <option value="BR">Brasilien</option>
-                        <option value="AU">Australien</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>KATEGORIE</label>
-                    <select id="articleCategory" required>
-                        <option value="">Kategorie wählen...</option>
-                        <option value="Politik">Politik</option>
-                        <option value="Wirtschaft">Wirtschaft</option>
-                        <option value="Finanzen">Finanzen</option>
-                        <option value="Geopolitik">Geopolitik</option>
-                        <option value="Investment">Investment</option>
-                        <option value="Märkte">Märkte</option>
-                        <option value="Technologie">Technologie</option>
-                        <option value="Energie">Energie</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>BILD-URL (optional)</label>
-                    <input type="url" id="articleImage" placeholder="https://...">
-                </div>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="articleBreaking">
-                        <span class="checkbox-custom"></span>
-                        <span class="checkbox-text">⚡ EILMELDUNG</span>
-                    </label>
-                </div>
-                <button type="submit" class="auth-btn" style="margin-top: 25px;">SPEICHERN</button>
-            </form>
+    <!-- Voice Overlay -->
+    <div class="voice-overlay" id="voiceOverlay">
+        <div class="voice-visual">
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
         </div>
+        <div class="voice-text">ICH HÖRE ZU...</div>
+        <div class="voice-transcript" id="voiceTranscript"></div>
+        <button class="voice-cancel" onclick="cancelVoice()">ABBRECHEN</button>
     </div>
 
-    <div class="connection-status">
-        <div class="status-dot" id="statusDot"></div>
-        <span id="statusText">VERBINDE...</span>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDrrnWy5d5tlHlxi965WGc_7Gs3GIXY0Qw",
-            authDomain: "atlas-4e16d.firebaseapp.com",
-            projectId: "atlas-4e16d",
-            storageBucket: "atlas-4e16d.firebasestorage.app",
-            messagingSenderId: "494472010986",
-            appId: "1:494472010986:web:9659fd71b4bcede8770b93"
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        const ATLAS_SERVER = 'https://atlas-production-b881.up.railway.app';
+        
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        
+        let isConnected = false;
+        let isListening = false;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ELEMENTS
+        // ═══════════════════════════════════════════════════════════════
+        
+        const elements = {
+            messages: document.getElementById('messages'),
+            welcome: document.getElementById('welcome'),
+            typing: document.getElementById('typing'),
+            textInput: document.getElementById('textInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            voiceBtn: document.getElementById('voiceBtn'),
+            voiceOverlay: document.getElementById('voiceOverlay'),
+            voiceTranscript: document.getElementById('voiceTranscript'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            errorBanner: document.getElementById('errorBanner')
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // DOM Elements
-        const loadingScreen = document.getElementById('loadingScreen');
-        const authContainer = document.getElementById('authContainer');
-        const appContainer = document.getElementById('appContainer');
-        const onlineGrid = document.getElementById('onlineGrid');
-        const savedGrid = document.getElementById('savedGrid');
-
-        let currentUser = null;
-        let onlineArticles = [];
-        let savedArticles = [];
-        let unsubscribe = null;
-
-        // ============ LOADING SCREEN ============
-        function updateLoadingSource(name, status, statusText) {
-            const el = document.querySelector(`[data-source="${name}"]`);
-            if (!el) return;
-            el.className = 'loading-source ' + status;
-            el.querySelector('.loading-source-status').textContent = statusText;
-        }
-
-        function updateLoadingProgress(percent) {
-            document.getElementById('loadingProgressFill').style.width = percent + '%';
-        }
-
-        function updateLoadingStatus(text) {
-            document.getElementById('loadingStatusText').textContent = text;
-        }
-
-        // ============ NEWS SCRAPERS ============
-        const newsScrapers = [
-            // GERMAN
-            { name: 'tagesschau', displayName: 'Tagesschau', url: 'https://www.tagesschau.de/xml/rss2/', category: 'Politik', country: 'DE' },
-            { name: 'zeit', displayName: 'Die Zeit', url: 'https://newsfeed.zeit.de/index', category: 'Politik', country: 'DE' },
-            { name: 'bild', displayName: 'BILD', url: 'https://www.bild.de/rssfeeds/rss3-20745882,feed=alles.bild.html', category: 'News', country: 'DE' },
-            { name: 'dw', displayName: 'Deutsche Welle', url: 'https://rss.dw.com/rdf/rss-de-all', category: 'Politik', country: 'DE' },
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function init() {
+            // Check server connection
+            await checkConnection();
             
-            // US
-            { name: 'cnn', displayName: 'CNN', url: 'http://rss.cnn.com/rss/edition_world.rss', category: 'Politik', country: 'US' },
-            { name: 'nbc', displayName: 'NBC News', url: 'https://feeds.nbcnews.com/nbcnews/public/world', category: 'Politik', country: 'US' },
-            { name: 'cbs', displayName: 'CBS News', url: 'https://www.cbsnews.com/latest/rss/world', category: 'Politik', country: 'US' },
-            { name: 'wapo', displayName: 'Washington Post', url: 'https://feeds.washingtonpost.com/rss/world', category: 'Politik', country: 'US' },
-            { name: 'npr', displayName: 'NPR', url: 'https://feeds.npr.org/1004/rss.xml', category: 'Politik', country: 'US' },
-            { name: 'pbs', displayName: 'PBS', url: 'https://www.pbs.org/newshour/feeds/rss/world', category: 'Politik', country: 'US' },
+            // Setup speech recognition
+            setupSpeechRecognition();
             
-            // INTERNATIONAL
-            { name: 'reuters', displayName: 'Reuters', url: 'https://www.reutersagency.com/feed/?best-topics=political-general&post_type=best', category: 'Politik', country: 'GLOBAL' },
-            { name: 'bbc', displayName: 'BBC News', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', category: 'Politik', country: 'GB' },
-            { name: 'france24', displayName: 'France 24', url: 'https://www.france24.com/en/rss', category: 'Politik', country: 'FR' },
-            { name: 'euronews', displayName: 'Euronews', url: 'https://www.euronews.com/rss?level=theme&name=news', category: 'Politik', country: 'GLOBAL' },
-            
-            // OTHER EUROPEAN
-            { name: 'nzz', displayName: 'NZZ', url: 'https://www.nzz.ch/international.rss', category: 'Politik', country: 'CH' },
-            { name: 'orf', displayName: 'ORF', url: 'https://rss.orf.at/news.xml', category: 'Politik', country: 'AT' },
-            { name: 'rai', displayName: 'RAI News', url: 'https://www.rainews.it/rss/mondo.xml', category: 'Politik', country: 'IT' },
-            { name: 'rtve', displayName: 'RTVE', url: 'https://www.rtve.es/noticias/internacional/rss.xml', category: 'Politik', country: 'ES' },
-            { name: 'rte', displayName: 'RTÉ News', url: 'https://www.rte.ie/feeds/rss/?index=/news/world/', category: 'Politik', country: 'IE' }
-        ];
-
-        async function fetchWithProxy(url) {
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-            ];
-            
-            for (const proxyUrl of proxies) {
-                try {
-                    const response = await fetch(proxyUrl);
-                    if (response.ok) return await response.text();
-                } catch (e) { continue; }
-            }
-            throw new Error('All proxies failed');
+            // Focus input
+            elements.textInput.focus();
         }
 
-        function parseRSS(xml, category, country = 'GLOBAL', sourceName = '') {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(xml, 'text/xml');
-            const items = doc.querySelectorAll('item');
-            const articles = [];
-            const now = new Date();
-            const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
-
-            items.forEach(item => {
-                try {
-                    const pubDateStr = item.querySelector('pubDate')?.textContent;
-                    const pubDate = pubDateStr ? new Date(pubDateStr) : new Date();
-                    
-                    // Allow articles from last 24h, or if no date available
-                    if (pubDateStr && pubDate < oneDayAgo) return;
-
-                    const title = item.querySelector('title')?.textContent || '';
-                    const link = item.querySelector('link')?.textContent || '';
-                    const description = item.querySelector('description')?.textContent || '';
-                    
-                    // Extract image from various sources
-                    let imageUrl = '';
-                    const mediaContent = item.querySelector('media\\:content, content');
-                    if (mediaContent) imageUrl = mediaContent.getAttribute('url') || '';
-                    
-                    const enclosure = item.querySelector('enclosure');
-                    if (!imageUrl && enclosure) imageUrl = enclosure.getAttribute('url') || '';
-                    
-                    const mediaThumbnail = item.querySelector('media\\:thumbnail, thumbnail');
-                    if (!imageUrl && mediaThumbnail) imageUrl = mediaThumbnail.getAttribute('url') || '';
-                    
-                    if (!imageUrl) {
-                        const imgMatch = description.match(/<img[^>]+src="([^">]+)"/);
-                        if (imgMatch) imageUrl = imgMatch[1];
-                    }
-
-                    if (title && link) {
-                        const keywords = extractKeywords(title, description);
-                        articles.push({
-                            id: 'online_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                            title: title.replace(/<[^>]*>/g, '').trim(),
-                            url: link.trim(),
-                            imageUrl: imageUrl,
-                            category: category,
-                            country: country,
-                            isBreaking: false,
-                            isOnline: true,
-                            createdAt: pubDate,
-                            source: sourceName || new URL(link).hostname.replace('www.', ''),
-                            keywords: keywords
-                        });
-                    }
-                } catch (e) { console.log('Parse error:', e); }
-            });
-
-            return articles;
-        }
-
-        async function scrapeAllNews() {
-            onlineArticles = [];
-            const totalScrapers = newsScrapers.length;
-            let completed = 0;
-
-            updateLoadingProgress(5);
-
-            for (const scraper of newsScrapers) {
-                updateLoadingSource(scraper.name, 'active', 'Scraping...');
-                updateLoadingStatus(`Lade ${scraper.displayName}... (${completed + 1}/${totalScrapers})`);
-
-                try {
-                    const xml = await Promise.race([
-                        fetchWithProxy(scraper.url),
-                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 12000))
-                    ]);
-
-                    const articles = parseRSS(xml, scraper.category, scraper.country, scraper.displayName);
-                    onlineArticles.push(...articles);
-                    
-                    updateLoadingSource(scraper.name, 'done', `${articles.length} Artikel`);
-                } catch (e) {
-                    console.error(`${scraper.name} failed:`, e.message);
-                    updateLoadingSource(scraper.name, 'error', 'Fehlgeschlagen');
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${ATLAS_SERVER}/health`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setStatus('online', 'ONLINE');
+                    isConnected = true;
+                    elements.errorBanner.classList.remove('show');
+                } else {
+                    throw new Error('Server not responding');
                 }
-
-                completed++;
-                updateLoadingProgress(5 + Math.floor((completed / totalScrapers) * 90));
-                
-                // Small delay to not overwhelm proxies
-                await new Promise(r => setTimeout(r, 200));
-            }
-
-            // Remove duplicates by URL
-            const seen = new Set();
-            onlineArticles = onlineArticles.filter(article => {
-                if (seen.has(article.url)) return false;
-                seen.add(article.url);
-                return true;
-            });
-
-            // Sort by date (newest first)
-            onlineArticles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
-            updateLoadingStatus(`${onlineArticles.length} Artikel aus ${totalScrapers} Quellen geladen!`);
-            updateLoadingProgress(100);
-        }
-
-        // ============ KEYWORD EXTRACTION (NO AI) ============
-        const stopWords = new Set([
-            'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'einem', 'einen',
-            'und', 'oder', 'aber', 'doch', 'noch', 'schon', 'auch', 'nur', 'sehr', 'mehr', 'viel',
-            'ist', 'sind', 'war', 'waren', 'wird', 'werden', 'hat', 'haben', 'hatte', 'hatten',
-            'für', 'mit', 'von', 'bei', 'nach', 'vor', 'über', 'unter', 'zwischen', 'durch',
-            'auf', 'aus', 'an', 'in', 'im', 'am', 'zum', 'zur', 'vom', 'beim',
-            'als', 'wie', 'wenn', 'weil', 'dass', 'ob', 'so', 'da', 'es', 'man',
-            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
-            'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used',
-            'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into',
-            'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under',
-            'and', 'but', 'or', 'nor', 'so', 'yet', 'both', 'either', 'neither',
-            'not', 'only', 'own', 'same', 'than', 'too', 'very', 'just', 'also',
-            'new', 'says', 'said', 'news', 'report', 'reports', 'update', 'updates'
-        ]);
-
-        const knownEntities = {
-            // Countries
-            countries: ['usa', 'china', 'russia', 'germany', 'france', 'uk', 'japan', 'india', 'brazil', 'canada', 'australia', 'ukraine', 'israel', 'iran', 'saudi', 'turkey', 'mexico', 'korea', 'taiwan', 'grönland', 'greenland', 'europe', 'asia', 'africa', 'nato', 'eu'],
-            // Politicians
-            politicians: ['trump', 'biden', 'putin', 'xi', 'jinping', 'scholz', 'macron', 'modi', 'zelensky', 'netanyahu', 'erdogan', 'musk', 'bezos', 'zuckerberg'],
-            // Companies
-            companies: ['apple', 'google', 'microsoft', 'amazon', 'tesla', 'nvidia', 'meta', 'facebook', 'twitter', 'openai', 'samsung', 'intel', 'amd', 'boeing', 'airbus'],
-            // Finance
-            finance: ['bitcoin', 'crypto', 'btc', 'eth', 'ethereum', 'stock', 'stocks', 'market', 'markets', 'dow', 'nasdaq', 's&p', 'fed', 'federal', 'reserve', 'inflation', 'interest', 'rate', 'rates', 'dollar', 'euro', 'yen', 'gold', 'oil', 'gas'],
-            // Topics
-            topics: ['war', 'krieg', 'military', 'militär', 'election', 'wahl', 'trade', 'handel', 'tariff', 'zoll', 'sanction', 'sanctions', 'nuclear', 'nuklear', 'climate', 'klima', 'energy', 'energie', 'tech', 'ai', 'künstliche', 'intelligenz', 'cyber', 'hack', 'economy', 'wirtschaft', 'recession', 'crisis', 'krise']
-        };
-
-        function extractKeywords(title, description = '') {
-            const text = (title + ' ' + description).toLowerCase();
-            const words = text.match(/[a-zA-ZäöüßÄÖÜ]{3,}/g) || [];
-            const keywords = new Set();
-            
-            // Extract words that are not stopwords
-            words.forEach(word => {
-                if (!stopWords.has(word) && word.length > 3) {
-                    // Check if it's a known entity
-                    for (const [category, entities] of Object.entries(knownEntities)) {
-                        if (entities.some(e => word.includes(e) || e.includes(word))) {
-                            keywords.add(word);
-                            return;
-                        }
-                    }
-                    // Check for capitalized words in original title (proper nouns)
-                    const originalWords = title.split(/\s+/);
-                    originalWords.forEach(ow => {
-                        if (ow.length > 3 && /^[A-ZÄÖÜ]/.test(ow) && ow.toLowerCase() === word) {
-                            keywords.add(word);
-                        }
-                    });
-                }
-            });
-
-            // Also add any known entities found
-            for (const [category, entities] of Object.entries(knownEntities)) {
-                entities.forEach(entity => {
-                    if (text.includes(entity)) {
-                        keywords.add(entity);
-                    }
-                });
-            }
-
-            // Extract numbers with context (percentages, money)
-            const numbers = text.match(/\d+[%$€]|\$\d+|\d+\s*(billion|million|trillion|prozent|percent)/gi) || [];
-            numbers.forEach(n => keywords.add(n.toLowerCase()));
-
-            return Array.from(keywords).slice(0, 40);
-        }
-
-        // ============ SEARCH FUNCTIONALITY ============
-        let currentSearchTerm = '';
-        let allKeywords = new Set();
-
-        function updateSearchTags() {
-            // Collect top keywords from all articles
-            const keywordCounts = {};
-            onlineArticles.forEach(article => {
-                (article.keywords || []).forEach(kw => {
-                    keywordCounts[kw] = (keywordCounts[kw] || 0) + 1;
-                });
-            });
-
-            // Sort by frequency and take top 15
-            const topKeywords = Object.entries(keywordCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 15)
-                .map(([kw]) => kw);
-
-            const tagsContainer = document.getElementById('searchTags');
-            tagsContainer.innerHTML = topKeywords.map(kw => 
-                `<span class="search-tag ${currentSearchTerm.toLowerCase() === kw ? 'active' : ''}" data-keyword="${kw}">${kw.toUpperCase()}</span>`
-            ).join('');
-
-            // Add click handlers
-            tagsContainer.querySelectorAll('.search-tag').forEach(tag => {
-                tag.addEventListener('click', () => {
-                    const keyword = tag.dataset.keyword;
-                    if (currentSearchTerm === keyword) {
-                        currentSearchTerm = '';
-                        document.getElementById('searchInput').value = '';
-                    } else {
-                        currentSearchTerm = keyword;
-                        document.getElementById('searchInput').value = keyword;
-                    }
-                    filterArticles();
-                });
-            });
-        }
-
-        function filterArticles() {
-            const searchTerm = currentSearchTerm.toLowerCase().trim();
-            const clearBtn = document.getElementById('searchClear');
-            const resultsEl = document.getElementById('searchResults');
-
-            clearBtn.classList.toggle('show', searchTerm.length > 0);
-
-            if (!searchTerm) {
-                resultsEl.textContent = '';
-                renderOnlineArticles(onlineArticles);
-                updateSearchTags();
-                return;
-            }
-
-            const filtered = onlineArticles.filter(article => {
-                const titleMatch = article.title.toLowerCase().includes(searchTerm);
-                const keywordMatch = (article.keywords || []).some(kw => kw.includes(searchTerm) || searchTerm.includes(kw));
-                return titleMatch || keywordMatch;
-            });
-
-            resultsEl.textContent = `${filtered.length} Artikel gefunden für "${searchTerm}"`;
-            renderOnlineArticles(filtered, searchTerm);
-            updateSearchTags();
-        }
-
-        // Search input handler
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            currentSearchTerm = e.target.value;
-            filterArticles();
-        });
-
-        document.getElementById('searchClear').addEventListener('click', () => {
-            currentSearchTerm = '';
-            document.getElementById('searchInput').value = '';
-            filterArticles();
-        });
-        // ============ AUTH ============
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                updateLoadingSource('auth', 'done', 'Authentifiziert');
-                
-                await scrapeAllNews();
-                
-                setTimeout(() => {
-                    loadingScreen.classList.add('hidden');
-                    appContainer.classList.add('show');
-                    document.getElementById('userEmail').textContent = user.email;
-                    document.getElementById('statusDot').classList.add('connected');
-                    document.getElementById('statusText').textContent = 'VERBUNDEN';
-                    
-                    renderOnlineArticles();
-                    loadSavedArticles();
-                }, 1000);
-            } else {
-                loadingScreen.classList.add('hidden');
-                authContainer.classList.remove('hidden');
-            }
-        });
-
-        // Auth tabs
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
-            });
-        });
-
-        // Login
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                document.getElementById('loginError').textContent = getErrorMessage(error.code);
+                console.error('Connection error:', error);
+                setStatus('offline', 'OFFLINE');
+                isConnected = false;
+                elements.errorBanner.classList.add('show');
+                
+                // Retry in 5 seconds
+                setTimeout(checkConnection, 5000);
             }
-        });
+        }
 
-        // Register
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                document.getElementById('registerError').textContent = getErrorMessage(error.code);
-            }
-        });
+        function setStatus(status, text) {
+            elements.statusDot.className = 'status-dot ' + status;
+            elements.statusText.textContent = text;
+        }
 
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (unsubscribe) unsubscribe();
-            signOut(auth);
-            appContainer.classList.remove('show');
-            authContainer.classList.remove('hidden');
-        });
-
-        // ============ TABS ============
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(tab.dataset.tab + 'Content').classList.add('active');
-            });
-        });
-
-        // ============ RENDER FUNCTIONS ============
-        function renderOnlineArticles(articles = onlineArticles, highlightTerm = '') {
-            if (articles.length === 0) {
-                onlineGrid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-text">KEINE ARTIKEL GEFUNDEN</div></div>';
+        // ═══════════════════════════════════════════════════════════════
+        // SPEECH RECOGNITION
+        // ═══════════════════════════════════════════════════════════════
+        
+        function setupSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                console.log('Speech recognition not supported');
+                elements.voiceBtn.style.opacity = '0.3';
+                elements.voiceBtn.title = 'Spracherkennung nicht unterstützt';
                 return;
             }
 
-            onlineGrid.innerHTML = articles.map(article => {
-                const keywordsHtml = (article.keywords || []).slice(0, 8).map(kw => {
-                    const isMatch = highlightTerm && (kw.includes(highlightTerm.toLowerCase()) || highlightTerm.toLowerCase().includes(kw));
-                    return `<span class="doc-keyword ${isMatch ? 'match' : ''}">${kw}</span>`;
-                }).join('');
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.continuous = false;
+            recognition.interimResults = true;
 
-                return `
-                <div class="doc-card online" onclick="window.openViewer('${encodeURIComponent(article.url)}', '${encodeURIComponent(article.title)}', '${encodeURIComponent(article.category)}', '${article.country}', ${article.isBreaking}, '${encodeURIComponent(article.imageUrl || '')}')">
-                    <div class="doc-actions">
-                        <button class="doc-btn save" onclick="event.stopPropagation(); window.saveOnlineArticle('${article.id}')" title="Speichern">💾</button>
-                    </div>
-                    ${article.imageUrl ? `<img src="${article.imageUrl}" class="doc-card-image" onerror="this.outerHTML='<div class=\\'doc-card-placeholder\\'>📰</div>'">` : '<div class="doc-card-placeholder">📰</div>'}
-                    <div class="doc-card-body">
-                        <div class="doc-category">
-                            <span class="online-badge">LIVE</span>
-                            ${article.category}
-                        </div>
-                        <div class="doc-title">${article.title}</div>
-                        <div class="doc-meta">
-                            <span>${article.source}</span>
-                            <span>${formatTime(article.createdAt)}</span>
-                        </div>
-                        <div class="doc-keywords">${keywordsHtml}</div>
-                    </div>
-                </div>
-            `}).join('');
-
-            document.getElementById('onlineCount').textContent = onlineArticles.length;
-            document.getElementById('statOnline').textContent = onlineArticles.length;
-            updateTotalStats();
-            updateSearchTags();
-        }
-
-        function renderSavedArticles() {
-            if (savedArticles.length === 0) {
-                savedGrid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">KEINE GESPEICHERTEN ARTIKEL</div></div>';
-                return;
-            }
-
-            savedGrid.innerHTML = savedArticles.map(article => `
-                <div class="doc-card" onclick="window.openViewer('${encodeURIComponent(article.url)}', '${encodeURIComponent(article.title)}', '${encodeURIComponent(article.category || '')}', '${article.country || ''}', ${article.isBreaking || false}, '${encodeURIComponent(article.imageUrl || '')}')">
-                    <div class="doc-actions">
-                        <button class="doc-btn delete" onclick="event.stopPropagation(); window.deleteArticle('${article.id}')" title="Löschen">×</button>
-                    </div>
-                    ${article.imageUrl ? `<img src="${article.imageUrl}" class="doc-card-image" onerror="this.outerHTML='<div class=\\'doc-card-placeholder\\'>📰</div>'">` : '<div class="doc-card-placeholder">📰</div>'}
-                    <div class="doc-card-body">
-                        <div class="doc-category">
-                            ${article.isBreaking ? '<span class="breaking">⚡ EILMELDUNG</span>' : ''}
-                            ${article.category || 'ARTIKEL'}
-                        </div>
-                        <div class="doc-title">${article.title}</div>
-                        <div class="doc-meta">
-                            <span>${getDomain(article.url)}</span>
-                            <span>${formatDate(article.createdAt)}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('savedCount').textContent = savedArticles.length;
-            document.getElementById('statSaved').textContent = savedArticles.length;
-            updateTotalStats();
-        }
-
-        function updateTotalStats() {
-            document.getElementById('statTotal').textContent = onlineArticles.length + savedArticles.length;
-            document.getElementById('statSync').textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        // ============ SAVED ARTICLES ============
-        function loadSavedArticles() {
-            const q = query(
-                collection(db, 'documents'),
-                where('userId', '==', currentUser.uid),
-                orderBy('createdAt', 'desc')
-            );
-
-            unsubscribe = onSnapshot(q, (snapshot) => {
-                savedArticles = [];
-                snapshot.forEach(doc => savedArticles.push({ id: doc.id, ...doc.data() }));
-                renderSavedArticles();
-            });
-        }
-
-        // ============ GLOBAL FUNCTIONS ============
-        window.openViewer = function(url, title, category, country, isBreaking, image) {
-            const params = new URLSearchParams({ url, title, category, country, breaking: isBreaking, image });
-            window.open(`viewer.html?${params.toString()}`, '_blank');
-        };
-
-        window.saveOnlineArticle = async function(articleId) {
-            const article = onlineArticles.find(a => a.id === articleId);
-            if (!article) return;
-
-            try {
-                await addDoc(collection(db, 'documents'), {
-                    url: article.url,
-                    title: article.title,
-                    category: article.category,
-                    country: article.country,
-                    imageUrl: article.imageUrl || '',
-                    isBreaking: false,
-                    userId: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-                alert('Artikel gespeichert!');
-            } catch (e) {
-                console.error('Save error:', e);
-                alert('Fehler beim Speichern');
-            }
-        };
-
-        window.deleteArticle = async function(articleId) {
-            if (!confirm('Artikel wirklich löschen?')) return;
-            try {
-                await deleteDoc(doc(db, 'documents', articleId));
-            } catch (e) {
-                console.error('Delete error:', e);
-            }
-        };
-
-        // ============ REFRESH ============
-        document.getElementById('refreshBtn').addEventListener('click', async () => {
-            onlineGrid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-            await scrapeAllNews();
-            renderOnlineArticles();
-        });
-
-        // ============ ADD MODAL ============
-        document.getElementById('addDocBtn').addEventListener('click', () => {
-            document.getElementById('addModal').classList.add('show');
-        });
-
-        document.getElementById('modalClose').addEventListener('click', () => {
-            document.getElementById('addModal').classList.remove('show');
-        });
-
-        document.getElementById('addDocForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await addDoc(collection(db, 'documents'), {
-                    url: document.getElementById('articleUrl').value,
-                    title: document.getElementById('articleTitle').value,
-                    country: document.getElementById('articleCountry').value,
-                    category: document.getElementById('articleCategory').value,
-                    imageUrl: document.getElementById('articleImage').value || '',
-                    isBreaking: document.getElementById('articleBreaking').checked,
-                    userId: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
-                document.getElementById('addModal').classList.remove('show');
-                document.getElementById('addDocForm').reset();
-            } catch (e) {
-                console.error('Add error:', e);
-            }
-        });
-
-        // ============ HELPERS ============
-        function formatTime(date) {
-            if (!date) return '-';
-            const d = date instanceof Date ? date : new Date(date);
-            const now = new Date();
-            const diff = Math.floor((now - d) / 1000 / 60);
-            if (diff < 60) return `vor ${diff}m`;
-            if (diff < 1440) return `vor ${Math.floor(diff / 60)}h`;
-            return d.toLocaleDateString('de-DE');
-        }
-
-        function formatDate(timestamp) {
-            if (!timestamp) return '-';
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString('de-DE');
-        }
-
-        function getDomain(url) {
-            try { return new URL(url).hostname.replace('www.', ''); }
-            catch { return '-'; }
-        }
-
-        function getErrorMessage(code) {
-            const msgs = {
-                'auth/email-already-in-use': 'E-Mail wird bereits verwendet',
-                'auth/invalid-email': 'Ungültige E-Mail',
-                'auth/weak-password': 'Passwort zu schwach',
-                'auth/user-not-found': 'Benutzer nicht gefunden',
-                'auth/wrong-password': 'Falsches Passwort'
+            recognition.onstart = () => {
+                isListening = true;
+                elements.voiceBtn.classList.add('listening');
+                elements.voiceOverlay.classList.add('show');
+                elements.voiceTranscript.textContent = '';
+                setStatus('listening', 'HÖRE ZU...');
             };
-            return msgs[code] || 'Fehler aufgetreten';
+
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                
+                elements.voiceTranscript.textContent = transcript;
+
+                if (event.results[0].isFinal) {
+                    stopListening();
+                    if (transcript.trim()) {
+                        elements.textInput.value = transcript;
+                        setTimeout(() => sendMessage(), 300);
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                stopListening();
+            };
+
+            recognition.onend = () => {
+                stopListening();
+            };
         }
+
+        function toggleVoice() {
+            if (!recognition) {
+                alert('Spracherkennung wird in diesem Browser nicht unterstützt.');
+                return;
+            }
+
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            // Stop any playing speech
+            if (synthesis.speaking) {
+                synthesis.cancel();
+            }
+            
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Could not start recognition:', e);
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            elements.voiceBtn.classList.remove('listening');
+            elements.voiceOverlay.classList.remove('show');
+            setStatus('online', 'ONLINE');
+            
+            try {
+                recognition.stop();
+            } catch (e) {}
+        }
+
+        function cancelVoice() {
+            stopListening();
+            elements.voiceTranscript.textContent = '';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEXT-TO-SPEECH
+        // ═══════════════════════════════════════════════════════════════
+        
+        function speak(text) {
+            if (!synthesis) return;
+            
+            // Cancel any ongoing speech
+            synthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'de-DE';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            
+            // Try to find a German voice
+            const voices = synthesis.getVoices();
+            const germanVoice = voices.find(v => v.lang.startsWith('de'));
+            if (germanVoice) {
+                utterance.voice = germanVoice;
+            }
+            
+            currentUtterance = utterance;
+            synthesis.speak(utterance);
+        }
+
+        // Load voices
+        if (synthesis) {
+            synthesis.onvoiceschanged = () => {
+                synthesis.getVoices();
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // MESSAGING
+        // ═══════════════════════════════════════════════════════════════
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const text = elements.textInput.value.trim();
+            if (!text) return;
+            
+            // Clear input
+            elements.textInput.value = '';
+            
+            // Hide welcome
+            elements.welcome.style.display = 'none';
+            
+            // Add user message
+            addMessage('user', text);
+            
+            // Show typing
+            elements.typing.classList.add('show');
+            setStatus('thinking', 'DENKT...');
+            scrollToBottom();
+            
+            try {
+                const response = await fetch(`${ATLAS_SERVER}/api/message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        userId: 'web-client'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Hide typing
+                elements.typing.classList.remove('show');
+                setStatus('online', 'ONLINE');
+                
+                if (data.success && data.message) {
+                    addMessage('atlas', data.message);
+                    speak(data.message);
+                } else {
+                    addMessage('atlas', data.error || 'Entschuldigung, es gab einen Fehler.');
+                }
+                
+            } catch (error) {
+                console.error('Send error:', error);
+                elements.typing.classList.remove('show');
+                setStatus('online', 'ONLINE');
+                addMessage('atlas', 'Verbindungsfehler. Bitte versuche es erneut.');
+            }
+            
+            scrollToBottom();
+        }
+
+        function addMessage(sender, text) {
+            const now = new Date();
+            const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${sender}`;
+            
+            messageEl.innerHTML = `
+                <div class="message-avatar">${sender === 'user' ? '👤' : '🤖'}</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">${sender === 'user' ? 'DU' : 'ATLAS'}</span>
+                        <span>${time}</span>
+                    </div>
+                    <div class="message-bubble">${formatMessage(text)}</div>
+                </div>
+            `;
+            
+            elements.messages.appendChild(messageEl);
+        }
+
+        function formatMessage(text) {
+            // Convert line breaks
+            return text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                elements.messages.scrollTop = elements.messages.scrollHeight;
+            }, 100);
+        }
+
+        function clearChat() {
+            // Keep welcome, remove messages
+            const messages = elements.messages.querySelectorAll('.message');
+            messages.forEach(m => m.remove());
+            elements.welcome.style.display = 'flex';
+        }
+
+        function toggleSettings() {
+            alert('Einstellungen kommen bald!');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        
+        init();
     </script>
 </body>
 </html>
