@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS // NEWS SCRAPER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: 'Share Tech Mono', monospace; min-height: 100vh; }
+
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 9999; }
+
+        /* Header */
+        .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,0,0,0.95); border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 5px; }
+        .back-btn { padding: 8px 16px; background: none; border: 1px solid #333; color: #666; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px; cursor: pointer; text-decoration: none; transition: all 0.3s; }
+        .back-btn:hover { border-color: #fff; color: #fff; }
+        .header-title { font-size: 10px; letter-spacing: 3px; color: #666; }
+
+        /* Main Layout */
+        .main-container { display: flex; height: calc(100vh - 50px); margin-top: 50px; }
+
+        /* Sidebar - Source Selection */
+        .sidebar { width: 400px; background: rgba(0,0,0,0.95); border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; }
+        
+        .sidebar-section { border-bottom: 1px solid #1a1a1a; }
+        .sidebar-section-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .sidebar-section-header:hover { background: rgba(255,255,255,0.02); }
+        .sidebar-section-title { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 2px; }
+        .sidebar-section-toggle { color: #666; font-size: 12px; }
+        .sidebar-section-content { display: none; padding: 0 15px 15px; }
+        .sidebar-section-content.show { display: block; }
+
+        /* Time Range */
+        .time-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .time-option { padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; text-align: center; cursor: pointer; font-size: 10px; letter-spacing: 1px; transition: all 0.3s; }
+        .time-option:hover { border-color: #333; }
+        .time-option.active { border-color: #4ade80; background: rgba(74,222,128,0.1); color: #4ade80; }
+
+        /* Topics */
+        .topic-options { display: flex; flex-wrap: wrap; gap: 8px; }
+        .topic-option { padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; font-size: 9px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; }
+        .topic-option:hover { border-color: #333; }
+        .topic-option.active { border-color: #4ade80; background: rgba(74,222,128,0.1); color: #4ade80; }
+
+        /* Source Categories */
+        .source-category { margin-bottom: 15px; }
+        .source-category-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #1a1a1a; margin-bottom: 10px; }
+        .source-category-title { font-size: 10px; letter-spacing: 2px; color: #666; }
+        .select-all-btn { font-size: 9px; color: #4ade80; cursor: pointer; background: none; border: none; }
+        .select-all-btn:hover { text-decoration: underline; }
+
+        /* Source Grid */
+        .sources-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 5px; }
+        .sources-grid::-webkit-scrollbar { width: 4px; }
+        .sources-grid::-webkit-scrollbar-thumb { background: #333; }
+
+        .source-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; cursor: pointer; transition: all 0.3s; }
+        .source-item:hover { border-color: #333; background: rgba(255,255,255,0.05); }
+        .source-item.selected { border-color: #4ade80; background: rgba(74,222,128,0.1); }
+        .source-logo { width: 28px; height: 28px; border-radius: 4px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
+        .source-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .source-info { flex: 1; min-width: 0; }
+        .source-name { font-size: 9px; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .source-country { font-size: 8px; color: #666; }
+        .source-check { width: 16px; height: 16px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #4ade80; }
+        .source-item.selected .source-check { background: #4ade80; color: #000; }
+
+        /* Scrape Button */
+        .scrape-section { padding: 20px; border-top: 1px solid #1a1a1a; margin-top: auto; }
+        .scrape-stats { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 10px; color: #666; }
+        .scrape-stats span { color: #fff; }
+        .scrape-btn { width: 100%; padding: 15px; background: #fff; color: #000; border: none; font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 3px; cursor: pointer; transition: all 0.3s; }
+        .scrape-btn:hover { background: #ccc; }
+        .scrape-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+        .scrape-btn.loading { background: #1a1a1a; color: #4ade80; }
+
+        /* Results Area */
+        .results-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .results-header { padding: 20px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+        .results-title { font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 3px; }
+        .results-count { font-size: 11px; color: #4ade80; }
+        .results-actions { display: flex; gap: 10px; }
+        .results-action-btn { padding: 8px 15px; background: none; border: 1px solid #333; color: #666; font-size: 9px; letter-spacing: 1px; cursor: pointer; font-family: 'Share Tech Mono', monospace; }
+        .results-action-btn:hover { border-color: #fff; color: #fff; }
+
+        .results-search { padding: 15px 20px; border-bottom: 1px solid #1a1a1a; }
+        .results-search input { width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 12px; }
+        .results-search input:focus { outline: none; border-color: #333; }
+        .results-search input::placeholder { color: #444; }
+
+        .results-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .results-list::-webkit-scrollbar { width: 6px; }
+        .results-list::-webkit-scrollbar-thumb { background: #333; }
+
+        /* Article Card */
+        .article-card { background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; margin-bottom: 15px; transition: all 0.3s; }
+        .article-card:hover { border-color: #333; }
+        .article-card-header { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid #1a1a1a; }
+        .article-source-logo { width: 32px; height: 32px; border-radius: 4px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .article-source-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .article-source-info { flex: 1; }
+        .article-source-name { font-size: 10px; letter-spacing: 1px; }
+        .article-source-time { font-size: 9px; color: #666; }
+        .article-card-body { padding: 15px; }
+        .article-title { font-size: 14px; line-height: 1.4; margin-bottom: 10px; cursor: pointer; }
+        .article-title:hover { color: #4ade80; }
+        .article-countries { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+        .article-country { padding: 3px 8px; background: rgba(255,255,255,0.05); font-size: 9px; }
+        .article-country.primary { background: rgba(74,222,128,0.2); color: #4ade80; }
+        .article-actions { display: flex; gap: 10px; padding-top: 10px; border-top: 1px solid #1a1a1a; }
+        .article-action { padding: 8px 15px; background: none; border: 1px solid #222; color: #666; font-size: 9px; letter-spacing: 1px; cursor: pointer; font-family: 'Share Tech Mono', monospace; transition: all 0.3s; }
+        .article-action:hover { border-color: #fff; color: #fff; }
+        .article-action.save { }
+        .article-action.save:hover { border-color: #4ade80; color: #4ade80; }
+        .article-action.saved { background: rgba(74,222,128,0.2); border-color: #4ade80; color: #4ade80; }
+
+        /* Loading Overlay */
+        .loading-overlay { position: fixed; top: 50px; left: 400px; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 500; }
+        .loading-overlay.show { display: flex; }
+        .loading-logo { font-family: 'Orbitron', sans-serif; font-size: 36px; letter-spacing: 8px; margin-bottom: 10px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .loading-status { font-size: 11px; color: #666; margin-bottom: 20px; letter-spacing: 2px; }
+        .loading-bar { width: 300px; height: 2px; background: #1a1a1a; overflow: hidden; margin-bottom: 30px; }
+        .loading-fill { height: 100%; background: #4ade80; width: 0%; transition: width 0.3s; }
+        .loading-sources { display: flex; flex-direction: column; gap: 8px; width: 300px; max-height: 300px; overflow-y: auto; }
+        .loading-source { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; font-size: 10px; }
+        .loading-source.active { border-color: #333; }
+        .loading-source.done { border-color: #4ade80; }
+        .loading-source.error { border-color: #ff6b6b; opacity: 0.5; }
+        .loading-source-icon { font-size: 12px; }
+        .loading-source-name { flex: 1; }
+        .loading-source-status { font-size: 9px; color: #666; }
+        .loading-source.done .loading-source-status { color: #4ade80; }
+
+        /* Empty State */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: #333; }
+        .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
+        .empty-state-text { font-size: 12px; letter-spacing: 3px; margin-bottom: 10px; }
+        .empty-state-hint { font-size: 10px; color: #444; }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">ATLAS</div>
+            <a href="index.html" class="back-btn">← ZURÜCK</a>
+        </div>
+        <div class="header-title">ADVANCED NEWS SCRAPER</div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Time Range -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-header" onclick="toggleSection(this)">
+                    <div class="sidebar-section-title">⏱ ZEITRAUM</div>
+                    <div class="sidebar-section-toggle">▼</div>
+                </div>
+                <div class="sidebar-section-content show">
+                    <div class="time-options" id="timeOptions">
+                        <div class="time-option" data-hours="0.25">15 MIN</div>
+                        <div class="time-option" data-hours="3">3 STD</div>
+                        <div class="time-option" data-hours="6">6 STD</div>
+                        <div class="time-option" data-hours="8">8 STD</div>
+                        <div class="time-option active" data-hours="24">24 STD</div>
+                        <div class="time-option" data-hours="48">2 TAGE</div>
+                        <div class="time-option" data-hours="168">1 WOCHE</div>
+                        <div class="time-option" data-hours="720">1 MONAT</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topics -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-header" onclick="toggleSection(this)">
+                    <div class="sidebar-section-title">📋 THEMEN</div>
+                    <div class="sidebar-section-toggle">▼</div>
+                </div>
+                <div class="sidebar-section-content show">
+                    <div class="topic-options" id="topicOptions">
+                        <div class="topic-option active" data-topic="all">ALLE</div>
+                        <div class="topic-option" data-topic="politics">POLITIK</div>
+                        <div class="topic-option" data-topic="economy">WIRTSCHAFT</div>
+                        <div class="topic-option" data-topic="finance">FINANZEN</div>
+                        <div class="topic-option" data-topic="geopolitics">GEOPOLITIK</div>
+                        <div class="topic-option" data-topic="military">MILITÄR</div>
+                        <div class="topic-option" data-topic="tech">TECHNOLOGIE</div>
+                        <div class="topic-option" data-topic="energy">ENERGIE</div>
+                        <div class="topic-option" data-topic="climate">KLIMA</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sources -->
+            <div class="sidebar-section" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="sidebar-section-header" onclick="toggleSection(this)">
+                    <div class="sidebar-section-title">📡 QUELLEN (<span id="selectedCount">0</span>)</div>
+                    <div class="sidebar-section-toggle">▼</div>
+                </div>
+                <div class="sidebar-section-content show" style="flex: 1; overflow-y: auto;">
+                    <div id="sourcesContainer"></div>
+                </div>
+            </div>
+
+            <!-- Scrape Button -->
+            <div class="scrape-section">
+                <div class="scrape-stats">
+                    <span>Ausgewählt: <span id="selectedSourcesCount">0</span> Quellen</span>
+                    <span>Zeitraum: <span id="selectedTimeRange">24 STD</span></span>
+                </div>
+                <button class="scrape-btn" id="scrapeBtn" onclick="startScraping()">
+                    SCRAPING STARTEN
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div class="results-area">
+            <div class="results-header">
+                <div>
+                    <div class="results-title">ERGEBNISSE</div>
+                    <div class="results-count" id="resultsCount">0 Artikel gefunden</div>
+                </div>
+                <div class="results-actions">
+                    <button class="results-action-btn" onclick="exportResults()">📥 EXPORTIEREN</button>
+                    <button class="results-action-btn" onclick="clearResults()">🗑 LEEREN</button>
+                </div>
+            </div>
+            <div class="results-search">
+                <input type="text" id="resultsSearch" placeholder="Ergebnisse filtern..." oninput="filterResults()">
+            </div>
+            <div class="results-list" id="resultsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📡</div>
+                    <div class="empty-state-text">KEINE ERGEBNISSE</div>
+                    <div class="empty-state-hint">Wähle Quellen aus und starte das Scraping</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-logo">SCRAPING</div>
+        <div class="loading-status" id="loadingStatus">Initialisiere...</div>
+        <div class="loading-bar"><div class="loading-fill" id="loadingFill"></div></div>
+        <div class="loading-sources" id="loadingSources"></div>
+    </div>
+
+    <script>
+        // ============ NEWS SOURCES DATABASE ============
+        const newsSources = {
+            // === GERMAN ===
+            german: {
+                name: '🇩🇪 DEUTSCHLAND',
+                sources: [
+                    { id: 'tagesschau', name: 'Tagesschau', logo: '🔴', url: 'https://www.tagesschau.de/xml/rss2/', country: 'DE' },
+                    { id: 'zeit', name: 'Die Zeit', logo: '📰', url: 'https://newsfeed.zeit.de/index', country: 'DE' },
+                    { id: 'bild', name: 'BILD', logo: '🔴', url: 'https://www.bild.de/rssfeeds/rss3-20745882,feed=alles.bild.html', country: 'DE' },
+                    { id: 'dw', name: 'Deutsche Welle', logo: '🌍', url: 'https://rss.dw.com/rdf/rss-de-all', country: 'DE' },
+                    { id: 'tagesschau24', name: 'Tagesschau24', logo: '📺', url: 'https://www.tagesschau.de/xml/rss2/', country: 'DE' },
+                ]
+            },
+            // === AUSTRIA/SWITZERLAND ===
+            dach: {
+                name: '🇦🇹🇨🇭 ÖSTERREICH & SCHWEIZ',
+                sources: [
+                    { id: 'orf', name: 'ORF', logo: '🇦🇹', url: 'https://rss.orf.at/news.xml', country: 'AT' },
+                    { id: 'orf3', name: 'ORF III', logo: '🇦🇹', url: 'https://rss.orf.at/news.xml', country: 'AT' },
+                    { id: 'nzz', name: 'NZZ', logo: '🇨🇭', url: 'https://www.nzz.ch/international.rss', country: 'CH' },
+                ]
+            },
+            // === US MAJOR ===
+            us_major: {
+                name: '🇺🇸 USA - MAJOR',
+                sources: [
+                    { id: 'cnn', name: 'CNN', logo: '🔴', url: 'http://rss.cnn.com/rss/edition_world.rss', country: 'US' },
+                    { id: 'nbc', name: 'NBC News', logo: '🦚', url: 'https://feeds.nbcnews.com/nbcnews/public/world', country: 'US' },
+                    { id: 'cbs', name: 'CBS News', logo: '👁', url: 'https://www.cbsnews.com/latest/rss/world', country: 'US' },
+                    { id: 'abc_us', name: 'ABC News (US)', logo: '🔵', url: 'https://abcnews.go.com/abcnews/internationalheadlines', country: 'US' },
+                    { id: 'wapo', name: 'Washington Post', logo: '📰', url: 'https://feeds.washingtonpost.com/rss/world', country: 'US' },
+                    { id: 'npr', name: 'NPR', logo: '🎙', url: 'https://feeds.npr.org/1004/rss.xml', country: 'US' },
+                    { id: 'pbs', name: 'PBS', logo: '📺', url: 'https://www.pbs.org/newshour/feeds/rss/world', country: 'US' },
+                    { id: 'fox', name: 'FOX News', logo: '🦊', url: 'https://moxie.foxnews.com/google-publisher/world.xml', country: 'US' },
+                ]
+            },
+            // === US FINANCE ===
+            us_finance: {
+                name: '🇺🇸 USA - FINANZEN',
+                sources: [
+                    { id: 'bloomberg', name: 'Bloomberg', logo: '📊', url: 'https://feeds.bloomberg.com/markets/news.rss', country: 'US' },
+                    { id: 'cnbc', name: 'CNBC', logo: '💹', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html', country: 'US' },
+                    { id: 'yahoo_fin', name: 'Yahoo Finance', logo: '📈', url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC&region=US&lang=en-US', country: 'US' },
+                    { id: 'cheddar', name: 'Cheddar News', logo: '🧀', url: 'https://cheddar.com/feed', country: 'US' },
+                ]
+            },
+            // === US OTHER ===
+            us_other: {
+                name: '🇺🇸 USA - WEITERE',
+                sources: [
+                    { id: 'newsmax', name: 'Newsmax', logo: '📺', url: 'https://www.newsmax.com/rss/Newsfront/1/', country: 'US' },
+                    { id: 'voa', name: 'VOA News', logo: '🗽', url: 'https://www.voanews.com/api/zr-orevqevi', country: 'US' },
+                    { id: 'vice', name: 'Vice News', logo: '⚡', url: 'https://www.vice.com/en/rss', country: 'US' },
+                    { id: 'scripps', name: 'Scripps News', logo: '📺', url: 'https://scrippsnews.com/feed/', country: 'US' },
+                ]
+            },
+            // === UK ===
+            uk: {
+                name: '🇬🇧 GROSSBRITANNIEN',
+                sources: [
+                    { id: 'bbc', name: 'BBC News', logo: '🔲', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', country: 'GB' },
+                    { id: 'sky_uk', name: 'Sky News', logo: '🔵', url: 'https://feeds.skynews.com/feeds/rss/world.xml', country: 'GB' },
+                    { id: 'gbnews', name: 'GB News', logo: '🇬🇧', url: 'https://www.gbnews.com/feeds/rss', country: 'GB' },
+                    { id: 'inews', name: 'iNews', logo: 'ℹ️', url: 'https://inews.co.uk/feed', country: 'GB' },
+                    { id: 'channel4', name: 'Channel 4 News', logo: '4️⃣', url: 'https://www.channel4.com/news/rss', country: 'GB' },
+                    { id: 'guardian', name: 'The Guardian', logo: '📰', url: 'https://www.theguardian.com/world/rss', country: 'GB' },
+                ]
+            },
+            // === EUROPE ===
+            europe: {
+                name: '🇪🇺 EUROPA',
+                sources: [
+                    { id: 'euronews', name: 'Euronews', logo: '🇪🇺', url: 'https://www.euronews.com/rss?level=theme&name=news', country: 'EU' },
+                    { id: 'france24', name: 'France 24', logo: '🇫🇷', url: 'https://www.france24.com/en/rss', country: 'FR' },
+                    { id: 'rai', name: 'RAI News', logo: '🇮🇹', url: 'https://www.rainews.it/rss/mondo.xml', country: 'IT' },
+                    { id: 'rtve', name: 'RTVE', logo: '🇪🇸', url: 'https://www.rtve.es/noticias/internacional/rss.xml', country: 'ES' },
+                    { id: 'rte', name: 'RTÉ News', logo: '🇮🇪', url: 'https://www.rte.ie/feeds/rss/?index=/news/world/', country: 'IE' },
+                    { id: 'tvp', name: 'TVP World', logo: '🇵🇱', url: 'https://tvpworld.com/rss/news', country: 'PL' },
+                    { id: 'sky_tg24', name: 'Sky TG24', logo: '🇮🇹', url: 'https://tg24.sky.it/rss/tg24_mondo.xml', country: 'IT' },
+                ]
+            },
+            // === MIDDLE EAST ===
+            middle_east: {
+                name: '🌍 NAHER OSTEN',
+                sources: [
+                    { id: 'aljazeera', name: 'Al Jazeera', logo: '🟠', url: 'https://www.aljazeera.com/xml/rss/all.xml', country: 'QA' },
+                    { id: 'i24news', name: 'i24NEWS', logo: '🇮🇱', url: 'https://www.i24news.tv/en/rss', country: 'IL' },
+                    { id: 'trt', name: 'TRT World', logo: '🇹🇷', url: 'https://www.trtworld.com/rss', country: 'TR' },
+                    { id: 'anews', name: 'ANews Turkey', logo: '🇹🇷', url: 'https://www.anews.com.tr/rss', country: 'TR' },
+                    { id: 'iran_intl', name: 'Iran International', logo: '🇮🇷', url: 'https://www.iranintl.com/en/rss', country: 'IR' },
+                    { id: 'presstv', name: 'Press TV', logo: '🇮🇷', url: 'https://www.presstv.ir/RSS', country: 'IR' },
+                ]
+            },
+            // === ASIA ===
+            asia: {
+                name: '🌏 ASIEN',
+                sources: [
+                    { id: 'nhk', name: 'NHK World', logo: '🇯🇵', url: 'https://www3.nhk.or.jp/rss/news/cat0.xml', country: 'JP' },
+                    { id: 'cna', name: 'CNA Singapore', logo: '🇸🇬', url: 'https://www.channelnewsasia.com/rss/latest_news', country: 'SG' },
+                    { id: 'cgtn', name: 'CGTN', logo: '🇨🇳', url: 'https://www.cgtn.com/subscribe/rss/section/world.xml', country: 'CN' },
+                    { id: 'arirang', name: 'Arirang News', logo: '🇰🇷', url: 'https://www.arirang.com/rss/news.xml', country: 'KR' },
+                    { id: 'wion', name: 'WION', logo: '🇮🇳', url: 'https://www.wionews.com/feeds/world/rss.xml', country: 'IN' },
+                    { id: 'ndtv', name: 'NDTV World', logo: '🇮🇳', url: 'https://feeds.feedburner.com/ndtvnews-world-news', country: 'IN' },
+                    { id: 'scmp', name: 'SCMP', logo: '🇭🇰', url: 'https://www.scmp.com/rss/91/feed', country: 'HK' },
+                ]
+            },
+            // === AUSTRALIA/NZ ===
+            oceania: {
+                name: '🇦🇺 AUSTRALIEN & OZEANIEN',
+                sources: [
+                    { id: 'abc_au', name: 'ABC Australia', logo: '🇦🇺', url: 'https://www.abc.net.au/news/feed/51120/rss.xml', country: 'AU' },
+                    { id: 'sbs', name: 'SBS News', logo: '🇦🇺', url: 'https://www.sbs.com.au/news/feed', country: 'AU' },
+                    { id: 'sky_au', name: 'Sky News AU', logo: '🇦🇺', url: 'https://www.skynews.com.au/rss', country: 'AU' },
+                    { id: 'tvnz', name: 'TVNZ', logo: '🇳🇿', url: 'https://www.tvnz.co.nz/one-news/rss', country: 'NZ' },
+                    { id: 'rnz', name: 'RNZ News', logo: '🇳🇿', url: 'https://www.rnz.co.nz/rss/national.xml', country: 'NZ' },
+                ]
+            },
+            // === AFRICA ===
+            africa: {
+                name: '🌍 AFRIKA',
+                sources: [
+                    { id: 'africanews', name: 'Africa News', logo: '🌍', url: 'https://www.africanews.com/rss', country: 'AF' },
+                    { id: 'sabc', name: 'SABC News', logo: '🇿🇦', url: 'https://www.sabcnews.com/sabcnews/feed/', country: 'ZA' },
+                    { id: 'ktn', name: 'KTN News', logo: '🇰🇪', url: 'https://www.standardmedia.co.ke/rss/headlines.php', country: 'KE' },
+                    { id: 'ntv_kenya', name: 'NTV Kenya', logo: '🇰🇪', url: 'https://ntv.nation.africa/feed', country: 'KE' },
+                ]
+            },
+            // === WIRE SERVICES ===
+            wire: {
+                name: '📡 NACHRICHTENAGENTUREN',
+                sources: [
+                    { id: 'reuters', name: 'Reuters', logo: '📰', url: 'https://www.reutersagency.com/feed/?best-topics=political-general&post_type=best', country: 'GLOBAL' },
+                    { id: 'ap', name: 'Associated Press', logo: '📰', url: 'https://rsshub.app/apnews/topics/world-news', country: 'GLOBAL' },
+                ]
+            },
+            // === INTERNATIONAL ===
+            international: {
+                name: '🌐 INTERNATIONAL',
+                sources: [
+                    { id: 'un', name: 'UN News', logo: '🇺🇳', url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml', country: 'GLOBAL' },
+                    { id: 'rt', name: 'RT News', logo: '🇷🇺', url: 'https://www.rt.com/rss/news/', country: 'RU' },
+                    { id: 'telesur', name: 'Telesur English', logo: '🌎', url: 'https://www.telesurenglish.net/rss/news.xml', country: 'VE' },
+                ]
+            }
+        };
+
+        // ============ COUNTRY DETECTION ============
+        const countryKeywords = {
+            'USA': ['usa', 'united states', 'america', 'washington', 'biden', 'trump', 'american', 'congress', 'pentagon', 'white house'],
+            'DEU': ['germany', 'deutschland', 'berlin', 'scholz', 'german', 'bundesregierung'],
+            'GBR': ['uk', 'britain', 'england', 'london', 'british', 'scotland'],
+            'FRA': ['france', 'frankreich', 'paris', 'macron', 'french'],
+            'RUS': ['russia', 'russland', 'moscow', 'putin', 'kremlin', 'russian'],
+            'CHN': ['china', 'beijing', 'xi jinping', 'chinese', 'shanghai'],
+            'UKR': ['ukraine', 'kyiv', 'zelensky', 'ukrainian', 'crimea', 'donbass'],
+            'ISR': ['israel', 'jerusalem', 'netanyahu', 'israeli', 'gaza', 'hamas', 'idf'],
+            'PSE': ['palestine', 'palestinian', 'gaza', 'west bank', 'ramallah'],
+            'IRN': ['iran', 'tehran', 'iranian', 'persian'],
+            'SAU': ['saudi', 'arabia', 'riyadh'],
+            'TUR': ['turkey', 'türkei', 'ankara', 'erdogan', 'turkish'],
+            'IND': ['india', 'delhi', 'mumbai', 'modi', 'indian'],
+            'JPN': ['japan', 'tokyo', 'japanese'],
+            'KOR': ['south korea', 'südkorea', 'seoul', 'korean'],
+            'PRK': ['north korea', 'nordkorea', 'pyongyang', 'kim jong'],
+            'AUS': ['australia', 'sydney', 'canberra'],
+            'CAN': ['canada', 'ottawa', 'trudeau', 'canadian'],
+            'BRA': ['brazil', 'brasilien', 'lula'],
+            'MEX': ['mexico', 'mexiko'],
+            'GRL': ['greenland', 'grönland', 'nuuk'],
+            'TWN': ['taiwan', 'taipei', 'taiwanese'],
+            'POL': ['poland', 'polen', 'warsaw'],
+            'ITA': ['italy', 'italien', 'rome', 'meloni'],
+            'ESP': ['spain', 'spanien', 'madrid'],
+            'NLD': ['netherlands', 'niederlande', 'amsterdam', 'dutch'],
+            'SYR': ['syria', 'syrien', 'damascus', 'assad'],
+            'YEM': ['yemen', 'jemen', 'houthi'],
+            'LBN': ['lebanon', 'libanon', 'beirut', 'hezbollah'],
+            'EGY': ['egypt', 'ägypten', 'cairo'],
+            'ARE': ['emirates', 'uae', 'dubai', 'abu dhabi'],
+        };
+
+        const countryFlags = {
+            'USA': '🇺🇸', 'DEU': '🇩🇪', 'GBR': '🇬🇧', 'FRA': '🇫🇷', 'RUS': '🇷🇺', 'CHN': '🇨🇳',
+            'UKR': '🇺🇦', 'ISR': '🇮🇱', 'PSE': '🇵🇸', 'IRN': '🇮🇷', 'SAU': '🇸🇦', 'TUR': '🇹🇷',
+            'IND': '🇮🇳', 'JPN': '🇯🇵', 'KOR': '🇰🇷', 'PRK': '🇰🇵', 'AUS': '🇦🇺', 'CAN': '🇨🇦',
+            'BRA': '🇧🇷', 'MEX': '🇲🇽', 'GRL': '🇬🇱', 'TWN': '🇹🇼', 'POL': '🇵🇱', 'ITA': '🇮🇹',
+            'ESP': '🇪🇸', 'NLD': '🇳🇱', 'SYR': '🇸🇾', 'YEM': '🇾🇪', 'LBN': '🇱🇧', 'EGY': '🇪🇬', 'ARE': '🇦🇪'
+        };
+
+        function detectCountries(text) {
+            const lowerText = text.toLowerCase();
+            const detected = [];
+            
+            for (const [code, keywords] of Object.entries(countryKeywords)) {
+                let score = 0;
+                for (const kw of keywords) {
+                    const matches = lowerText.match(new RegExp('\\b' + kw + '\\b', 'gi'));
+                    if (matches) score += matches.length;
+                }
+                if (score > 0) {
+                    detected.push({ code, score, flag: countryFlags[code] || '🌍' });
+                }
+            }
+            
+            return detected.sort((a, b) => b.score - a.score);
+        }
+
+        // ============ STATE ============
+        let selectedSources = new Set();
+        let selectedTimeHours = 24;
+        let selectedTopic = 'all';
+        let scrapedArticles = [];
+
+        // ============ INIT ============
+        function init() {
+            renderSources();
+            setupEventListeners();
+        }
+
+        function renderSources() {
+            const container = document.getElementById('sourcesContainer');
+            container.innerHTML = '';
+
+            for (const [categoryId, category] of Object.entries(newsSources)) {
+                const categoryEl = document.createElement('div');
+                categoryEl.className = 'source-category';
+                categoryEl.innerHTML = `
+                    <div class="source-category-header">
+                        <div class="source-category-title">${category.name}</div>
+                        <button class="select-all-btn" onclick="selectCategory('${categoryId}')">Alle auswählen</button>
+                    </div>
+                    <div class="sources-grid" id="sources-${categoryId}">
+                        ${category.sources.map(source => `
+                            <div class="source-item ${selectedSources.has(source.id) ? 'selected' : ''}" data-id="${source.id}" onclick="toggleSource('${source.id}')">
+                                <div class="source-logo">${source.logo}</div>
+                                <div class="source-info">
+                                    <div class="source-name">${source.name}</div>
+                                    <div class="source-country">${source.country}</div>
+                                </div>
+                                <div class="source-check">${selectedSources.has(source.id) ? '✓' : ''}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(categoryEl);
+            }
+        }
+
+        function setupEventListeners() {
+            // Time options
+            document.querySelectorAll('.time-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('.time-option').forEach(e => e.classList.remove('active'));
+                    el.classList.add('active');
+                    selectedTimeHours = parseFloat(el.dataset.hours);
+                    document.getElementById('selectedTimeRange').textContent = el.textContent;
+                });
+            });
+
+            // Topic options
+            document.querySelectorAll('.topic-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('.topic-option').forEach(e => e.classList.remove('active'));
+                    el.classList.add('active');
+                    selectedTopic = el.dataset.topic;
+                });
+            });
+        }
+
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('show');
+            header.querySelector('.sidebar-section-toggle').textContent = content.classList.contains('show') ? '▼' : '▶';
+        }
+
+        function toggleSource(sourceId) {
+            if (selectedSources.has(sourceId)) {
+                selectedSources.delete(sourceId);
+            } else {
+                selectedSources.add(sourceId);
+            }
+            updateSelectedCount();
+            renderSources();
+        }
+
+        function selectCategory(categoryId) {
+            const category = newsSources[categoryId];
+            const allSelected = category.sources.every(s => selectedSources.has(s.id));
+            
+            category.sources.forEach(source => {
+                if (allSelected) {
+                    selectedSources.delete(source.id);
+                } else {
+                    selectedSources.add(source.id);
+                }
+            });
+            
+            updateSelectedCount();
+            renderSources();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedSources.size;
+            document.getElementById('selectedSourcesCount').textContent = selectedSources.size;
+            document.getElementById('scrapeBtn').disabled = selectedSources.size === 0;
+        }
+
+        // ============ SCRAPING ============
+        async function fetchWithProxy(url) {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+            for (const proxyUrl of proxies) {
+                try {
+                    const r = await fetch(proxyUrl);
+                    if (r.ok) return await r.text();
+                } catch (e) { continue; }
+            }
+            throw new Error('Proxy failed');
+        }
+
+        function parseRSS(xml, sourceName) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xml, 'text/xml');
+            const items = doc.querySelectorAll('item');
+            const results = [];
+            const now = new Date();
+            const cutoff = new Date(now - selectedTimeHours * 60 * 60 * 1000);
+
+            items.forEach(item => {
+                try {
+                    const pubDateStr = item.querySelector('pubDate')?.textContent;
+                    const pubDate = pubDateStr ? new Date(pubDateStr) : new Date();
+                    if (pubDateStr && pubDate < cutoff) return;
+
+                    const title = item.querySelector('title')?.textContent?.replace(/<[^>]*>/g, '').trim() || '';
+                    const link = item.querySelector('link')?.textContent?.trim() || '';
+                    const description = item.querySelector('description')?.textContent?.replace(/<[^>]*>/g, '').trim() || '';
+
+                    if (!title || !link) return;
+
+                    const countries = detectCountries(title + ' ' + description);
+
+                    results.push({
+                        id: 'art_' + Math.random().toString(36).substr(2, 9),
+                        title,
+                        url: link,
+                        description: description.substring(0, 300),
+                        source: sourceName,
+                        createdAt: pubDate,
+                        countries,
+                        saved: false
+                    });
+                } catch (e) {}
+            });
+
+            return results;
+        }
+
+        function getSourceById(sourceId) {
+            for (const category of Object.values(newsSources)) {
+                const source = category.sources.find(s => s.id === sourceId);
+                if (source) return source;
+            }
+            return null;
+        }
+
+        async function startScraping() {
+            if (selectedSources.size === 0) return;
+
+            const overlay = document.getElementById('loadingOverlay');
+            const statusEl = document.getElementById('loadingStatus');
+            const fillEl = document.getElementById('loadingFill');
+            const sourcesEl = document.getElementById('loadingSources');
+
+            overlay.classList.add('show');
+            scrapedArticles = [];
+
+            const sources = Array.from(selectedSources).map(id => getSourceById(id)).filter(Boolean);
+            
+            // Render loading sources
+            sourcesEl.innerHTML = sources.map(s => `
+                <div class="loading-source" data-id="${s.id}">
+                    <div class="loading-source-icon">${s.logo}</div>
+                    <div class="loading-source-name">${s.name}</div>
+                    <div class="loading-source-status">Wartend...</div>
+                </div>
+            `).join('');
+
+            let completed = 0;
+            for (const source of sources) {
+                const sourceEl = sourcesEl.querySelector(`[data-id="${source.id}"]`);
+                sourceEl.classList.add('active');
+                sourceEl.querySelector('.loading-source-status').textContent = 'Scraping...';
+                statusEl.textContent = `Lade ${source.name}...`;
+
+                try {
+                    const xml = await Promise.race([
+                        fetchWithProxy(source.url),
+                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 12000))
+                    ]);
+                    
+                    const articles = parseRSS(xml, source.name);
+                    scrapedArticles.push(...articles.map(a => ({ ...a, sourceLogo: source.logo })));
+                    
+                    sourceEl.classList.remove('active');
+                    sourceEl.classList.add('done');
+                    sourceEl.querySelector('.loading-source-status').textContent = `${articles.length} Artikel`;
+                } catch (e) {
+                    sourceEl.classList.remove('active');
+                    sourceEl.classList.add('error');
+                    sourceEl.querySelector('.loading-source-status').textContent = 'Fehler';
+                }
+
+                completed++;
+                fillEl.style.width = ((completed / sources.length) * 100) + '%';
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            // Remove duplicates and sort
+            const seen = new Set();
+            scrapedArticles = scrapedArticles.filter(a => {
+                if (seen.has(a.url)) return false;
+                seen.add(a.url);
+                return true;
+            }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            statusEl.textContent = `${scrapedArticles.length} Artikel gefunden!`;
+            
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                renderResults();
+            }, 1000);
+        }
+
+        // ============ RESULTS ============
+        function renderResults(articles = scrapedArticles) {
+            const list = document.getElementById('resultsList');
+            document.getElementById('resultsCount').textContent = `${articles.length} Artikel gefunden`;
+
+            if (articles.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📡</div>
+                        <div class="empty-state-text">KEINE ERGEBNISSE</div>
+                        <div class="empty-state-hint">Wähle Quellen aus und starte das Scraping</div>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = articles.map(article => `
+                <div class="article-card" data-id="${article.id}">
+                    <div class="article-card-header">
+                        <div class="article-source-logo">${article.sourceLogo || '📰'}</div>
+                        <div class="article-source-info">
+                            <div class="article-source-name">${article.source}</div>
+                            <div class="article-source-time">${formatTime(article.createdAt)}</div>
+                        </div>
+                    </div>
+                    <div class="article-card-body">
+                        <div class="article-title" onclick="window.open('${article.url}', '_blank')">${article.title}</div>
+                        ${article.countries.length > 0 ? `
+                            <div class="article-countries">
+                                ${article.countries.slice(0, 5).map((c, i) => `
+                                    <span class="article-country ${i === 0 ? 'primary' : ''}">${c.flag} ${c.code}</span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="article-actions">
+                            <button class="article-action" onclick="window.open('${article.url}', '_blank')">ÖFFNEN</button>
+                            <button class="article-action save ${article.saved ? 'saved' : ''}" onclick="saveArticle('${article.id}')">
+                                ${article.saved ? '✓ GESPEICHERT' : '💾 SPEICHERN'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterResults() {
+            const term = document.getElementById('resultsSearch').value.toLowerCase();
+            if (!term) {
+                renderResults();
+                return;
+            }
+
+            const filtered = scrapedArticles.filter(a => 
+                a.title.toLowerCase().includes(term) ||
+                a.source.toLowerCase().includes(term) ||
+                a.countries.some(c => c.code.toLowerCase().includes(term))
+            );
+            renderResults(filtered);
+        }
+
+        function saveArticle(articleId) {
+            const article = scrapedArticles.find(a => a.id === articleId);
+            if (!article || article.saved) return;
+
+            // Here you would save to Firebase
+            // For now, just mark as saved
+            article.saved = true;
+            renderResults();
+            
+            // Show notification
+            alert('Artikel gespeichert! (In der echten App wird er in Firebase gespeichert)');
+        }
+
+        function exportResults() {
+            if (scrapedArticles.length === 0) return;
+            
+            const data = scrapedArticles.map(a => ({
+                title: a.title,
+                url: a.url,
+                source: a.source,
+                date: a.createdAt.toISOString(),
+                countries: a.countries.map(c => c.code).join(', ')
+            }));
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `atlas-news-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function clearResults() {
+            scrapedArticles = [];
+            renderResults();
+        }
+
+        function formatTime(date) {
+            if (!date) return '-';
+            const d = date instanceof Date ? date : new Date(date);
+            const now = new Date();
+            const diff = Math.floor((now - d) / 1000 / 60);
+            if (diff < 60) return `vor ${diff}m`;
+            if (diff < 1440) return `vor ${Math.floor(diff / 60)}h`;
+            return d.toLocaleDateString('de-DE');
+        }
+
+        // Init
+        init();
+    </script>
+</body>
+</html>

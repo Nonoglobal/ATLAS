@@ -24,14 +24,17 @@
         .loading-progress-bar { width: 300px; height: 2px; background: #1a1a1a; margin-bottom: 30px; overflow: hidden; }
         .loading-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.3s; }
         
-        .loading-sources { display: flex; flex-direction: column; gap: 10px; width: 280px; }
-        .loading-source { display: flex; align-items: center; gap: 12px; padding: 10px 15px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; }
+        .loading-sources { display: flex; flex-direction: column; gap: 8px; width: 320px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .loading-sources::-webkit-scrollbar { width: 4px; }
+        .loading-sources::-webkit-scrollbar-track { background: #111; }
+        .loading-sources::-webkit-scrollbar-thumb { background: #333; }
+        .loading-source { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; flex-shrink: 0; }
         .loading-source.active { border-color: #333; background: rgba(255,255,255,0.05); }
         .loading-source.done { border-color: #4ade80; background: rgba(74,222,128,0.1); }
         .loading-source.error { border-color: #ff6b6b; opacity: 0.5; }
         .loading-source-icon { font-size: 14px; }
-        .loading-source-name { font-size: 10px; letter-spacing: 2px; flex: 1; }
-        .loading-source-status { font-size: 9px; color: #666; }
+        .loading-source-name { font-size: 9px; letter-spacing: 1px; flex: 1; }
+        .loading-source-status { font-size: 8px; color: #666; }
         .loading-source.active .loading-source-status { color: #888; }
         .loading-source.done .loading-source-status { color: #4ade80; }
 
@@ -197,19 +200,99 @@
                 <div class="loading-source-name">AUTHENTICATION</div>
                 <div class="loading-source-status">Wartend...</div>
             </div>
-            <div class="loading-source" data-source="google">
-                <div class="loading-source-icon">📊</div>
-                <div class="loading-source-name">GOOGLE FINANCE</div>
+            <div class="loading-source" data-source="tagesschau">
+                <div class="loading-source-icon">🇩🇪</div>
+                <div class="loading-source-name">TAGESSCHAU</div>
                 <div class="loading-source-status">Wartend...</div>
             </div>
-            <div class="loading-source" data-source="yahoo">
-                <div class="loading-source-icon">📰</div>
-                <div class="loading-source-name">YAHOO NEWS</div>
+            <div class="loading-source" data-source="zeit">
+                <div class="loading-source-icon">🇩🇪</div>
+                <div class="loading-source-name">DIE ZEIT</div>
                 <div class="loading-source-status">Wartend...</div>
             </div>
-            <div class="loading-source" data-source="cnbc">
-                <div class="loading-source-icon">💹</div>
-                <div class="loading-source-name">CNBC</div>
+            <div class="loading-source" data-source="bild">
+                <div class="loading-source-icon">🇩🇪</div>
+                <div class="loading-source-name">BILD</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="dw">
+                <div class="loading-source-icon">🇩🇪</div>
+                <div class="loading-source-name">DEUTSCHE WELLE</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="cnn">
+                <div class="loading-source-icon">🇺🇸</div>
+                <div class="loading-source-name">CNN</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="nbc">
+                <div class="loading-source-icon">🇺🇸</div>
+                <div class="loading-source-name">NBC NEWS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="cbs">
+                <div class="loading-source-icon">🇺🇸</div>
+                <div class="loading-source-name">CBS NEWS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="wapo">
+                <div class="loading-source-icon">🇺🇸</div>
+                <div class="loading-source-name">WASHINGTON POST</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="npr">
+                <div class="loading-source-icon">🇺🇸</div>
+                <div class="loading-source-name">NPR</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="pbs">
+                <div class="loading-source-icon">🇺🇸</div>
+                <div class="loading-source-name">PBS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="reuters">
+                <div class="loading-source-icon">🌍</div>
+                <div class="loading-source-name">REUTERS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="bbc">
+                <div class="loading-source-icon">🇬🇧</div>
+                <div class="loading-source-name">BBC NEWS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="france24">
+                <div class="loading-source-icon">🇫🇷</div>
+                <div class="loading-source-name">FRANCE 24</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="euronews">
+                <div class="loading-source-icon">🇪🇺</div>
+                <div class="loading-source-name">EURONEWS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="nzz">
+                <div class="loading-source-icon">🇨🇭</div>
+                <div class="loading-source-name">NZZ</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="orf">
+                <div class="loading-source-icon">🇦🇹</div>
+                <div class="loading-source-name">ORF</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="rai">
+                <div class="loading-source-icon">🇮🇹</div>
+                <div class="loading-source-name">RAI NEWS</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="rtve">
+                <div class="loading-source-icon">🇪🇸</div>
+                <div class="loading-source-name">RTVE</div>
+                <div class="loading-source-status">Wartend...</div>
+            </div>
+            <div class="loading-source" data-source="rte">
+                <div class="loading-source-icon">🇮🇪</div>
+                <div class="loading-source-name">RTÉ NEWS</div>
                 <div class="loading-source-status">Wartend...</div>
             </div>
         </div>
@@ -257,6 +340,7 @@
             <div class="header-left">
                 <div class="logo">ATLAS</div>
                 <a href="map.html" class="nav-btn">🌍 WELTKARTE</a>
+                <a href="scraper.html" class="nav-btn">📡 SCRAPER</a>
             </div>
             <div class="header-right">
                 <span class="user-email" id="userEmail"></span>
@@ -454,27 +538,32 @@
 
         // ============ NEWS SCRAPERS ============
         const newsScrapers = [
-            {
-                name: 'google',
-                displayName: 'Google Finance',
-                url: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpmTjNRU0FtUmxHZ0pCVkNnQVAB',
-                parse: parseRSS,
-                category: 'Finanzen'
-            },
-            {
-                name: 'yahoo',
-                displayName: 'Yahoo Finance',
-                url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC&region=US&lang=en-US',
-                parse: parseRSS,
-                category: 'Märkte'
-            },
-            {
-                name: 'cnbc',
-                displayName: 'CNBC',
-                url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-                parse: parseRSS,
-                category: 'Wirtschaft'
-            }
+            // GERMAN
+            { name: 'tagesschau', displayName: 'Tagesschau', url: 'https://www.tagesschau.de/xml/rss2/', category: 'Politik', country: 'DE' },
+            { name: 'zeit', displayName: 'Die Zeit', url: 'https://newsfeed.zeit.de/index', category: 'Politik', country: 'DE' },
+            { name: 'bild', displayName: 'BILD', url: 'https://www.bild.de/rssfeeds/rss3-20745882,feed=alles.bild.html', category: 'News', country: 'DE' },
+            { name: 'dw', displayName: 'Deutsche Welle', url: 'https://rss.dw.com/rdf/rss-de-all', category: 'Politik', country: 'DE' },
+            
+            // US
+            { name: 'cnn', displayName: 'CNN', url: 'http://rss.cnn.com/rss/edition_world.rss', category: 'Politik', country: 'US' },
+            { name: 'nbc', displayName: 'NBC News', url: 'https://feeds.nbcnews.com/nbcnews/public/world', category: 'Politik', country: 'US' },
+            { name: 'cbs', displayName: 'CBS News', url: 'https://www.cbsnews.com/latest/rss/world', category: 'Politik', country: 'US' },
+            { name: 'wapo', displayName: 'Washington Post', url: 'https://feeds.washingtonpost.com/rss/world', category: 'Politik', country: 'US' },
+            { name: 'npr', displayName: 'NPR', url: 'https://feeds.npr.org/1004/rss.xml', category: 'Politik', country: 'US' },
+            { name: 'pbs', displayName: 'PBS', url: 'https://www.pbs.org/newshour/feeds/rss/world', category: 'Politik', country: 'US' },
+            
+            // INTERNATIONAL
+            { name: 'reuters', displayName: 'Reuters', url: 'https://www.reutersagency.com/feed/?best-topics=political-general&post_type=best', category: 'Politik', country: 'GLOBAL' },
+            { name: 'bbc', displayName: 'BBC News', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', category: 'Politik', country: 'GB' },
+            { name: 'france24', displayName: 'France 24', url: 'https://www.france24.com/en/rss', category: 'Politik', country: 'FR' },
+            { name: 'euronews', displayName: 'Euronews', url: 'https://www.euronews.com/rss?level=theme&name=news', category: 'Politik', country: 'GLOBAL' },
+            
+            // OTHER EUROPEAN
+            { name: 'nzz', displayName: 'NZZ', url: 'https://www.nzz.ch/international.rss', category: 'Politik', country: 'CH' },
+            { name: 'orf', displayName: 'ORF', url: 'https://rss.orf.at/news.xml', category: 'Politik', country: 'AT' },
+            { name: 'rai', displayName: 'RAI News', url: 'https://www.rainews.it/rss/mondo.xml', category: 'Politik', country: 'IT' },
+            { name: 'rtve', displayName: 'RTVE', url: 'https://www.rtve.es/noticias/internacional/rss.xml', category: 'Politik', country: 'ES' },
+            { name: 'rte', displayName: 'RTÉ News', url: 'https://www.rte.ie/feeds/rss/?index=/news/world/', category: 'Politik', country: 'IE' }
         ];
 
         async function fetchWithProxy(url) {
@@ -493,7 +582,7 @@
             throw new Error('All proxies failed');
         }
 
-        function parseRSS(xml, category) {
+        function parseRSS(xml, category, country = 'GLOBAL', sourceName = '') {
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, 'text/xml');
             const items = doc.querySelectorAll('item');
@@ -503,17 +592,26 @@
 
             items.forEach(item => {
                 try {
-                    const pubDate = new Date(item.querySelector('pubDate')?.textContent);
-                    if (pubDate < oneDayAgo) return;
+                    const pubDateStr = item.querySelector('pubDate')?.textContent;
+                    const pubDate = pubDateStr ? new Date(pubDateStr) : new Date();
+                    
+                    // Allow articles from last 24h, or if no date available
+                    if (pubDateStr && pubDate < oneDayAgo) return;
 
                     const title = item.querySelector('title')?.textContent || '';
                     const link = item.querySelector('link')?.textContent || '';
                     const description = item.querySelector('description')?.textContent || '';
                     
-                    // Extract image from description or media content
+                    // Extract image from various sources
                     let imageUrl = '';
                     const mediaContent = item.querySelector('media\\:content, content');
                     if (mediaContent) imageUrl = mediaContent.getAttribute('url') || '';
+                    
+                    const enclosure = item.querySelector('enclosure');
+                    if (!imageUrl && enclosure) imageUrl = enclosure.getAttribute('url') || '';
+                    
+                    const mediaThumbnail = item.querySelector('media\\:thumbnail, thumbnail');
+                    if (!imageUrl && mediaThumbnail) imageUrl = mediaThumbnail.getAttribute('url') || '';
                     
                     if (!imageUrl) {
                         const imgMatch = description.match(/<img[^>]+src="([^">]+)"/);
@@ -524,19 +622,19 @@
                         const keywords = extractKeywords(title, description);
                         articles.push({
                             id: 'online_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                            title: title.replace(/<[^>]*>/g, ''),
-                            url: link,
+                            title: title.replace(/<[^>]*>/g, '').trim(),
+                            url: link.trim(),
                             imageUrl: imageUrl,
                             category: category,
-                            country: 'GLOBAL',
+                            country: country,
                             isBreaking: false,
                             isOnline: true,
                             createdAt: pubDate,
-                            source: new URL(link).hostname.replace('www.', ''),
+                            source: sourceName || new URL(link).hostname.replace('www.', ''),
                             keywords: keywords
                         });
                     }
-                } catch (e) {}
+                } catch (e) { console.log('Parse error:', e); }
             });
 
             return articles;
@@ -544,36 +642,49 @@
 
         async function scrapeAllNews() {
             onlineArticles = [];
-            let progress = 25;
+            const totalScrapers = newsScrapers.length;
+            let completed = 0;
+
+            updateLoadingProgress(5);
 
             for (const scraper of newsScrapers) {
                 updateLoadingSource(scraper.name, 'active', 'Scraping...');
-                updateLoadingStatus(`Lade ${scraper.displayName}...`);
+                updateLoadingStatus(`Lade ${scraper.displayName}... (${completed + 1}/${totalScrapers})`);
 
                 try {
                     const xml = await Promise.race([
                         fetchWithProxy(scraper.url),
-                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 15000))
+                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 12000))
                     ]);
 
-                    const articles = scraper.parse(xml, scraper.category);
+                    const articles = parseRSS(xml, scraper.category, scraper.country, scraper.displayName);
                     onlineArticles.push(...articles);
                     
                     updateLoadingSource(scraper.name, 'done', `${articles.length} Artikel`);
                 } catch (e) {
-                    console.error(`${scraper.name} failed:`, e);
+                    console.error(`${scraper.name} failed:`, e.message);
                     updateLoadingSource(scraper.name, 'error', 'Fehlgeschlagen');
                 }
 
-                progress += 25;
-                updateLoadingProgress(progress);
-                await new Promise(r => setTimeout(r, 300));
+                completed++;
+                updateLoadingProgress(5 + Math.floor((completed / totalScrapers) * 90));
+                
+                // Small delay to not overwhelm proxies
+                await new Promise(r => setTimeout(r, 200));
             }
 
-            // Sort by date
+            // Remove duplicates by URL
+            const seen = new Set();
+            onlineArticles = onlineArticles.filter(article => {
+                if (seen.has(article.url)) return false;
+                seen.add(article.url);
+                return true;
+            });
+
+            // Sort by date (newest first)
             onlineArticles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
-            updateLoadingStatus(`${onlineArticles.length} Artikel geladen!`);
+            updateLoadingStatus(`${onlineArticles.length} Artikel aus ${totalScrapers} Quellen geladen!`);
             updateLoadingProgress(100);
         }
 

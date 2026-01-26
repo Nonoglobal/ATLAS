@@ -3,1135 +3,725 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS // GLOBAL INTELLIGENCE MAP</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <title>ATLAS // GLOBAL NEWS MAP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: 'Share Tech Mono', monospace; height: 100vh; overflow: hidden; }
 
-        body {
-            background: #000;
-            color: #fff;
-            font-family: 'Share Tech Mono', monospace;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Scanlines Effect */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.1) 0px,
-                rgba(0, 0, 0, 0.1) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 9999;
-        }
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 9999; }
 
         /* Header */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.95);
-            border-bottom: 1px solid #1a1a1a;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
-            z-index: 1000;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: 5px;
-            color: #fff;
-        }
-
-        .logo-sub {
-            font-size: 9px;
-            letter-spacing: 3px;
-            color: #444;
-            border-left: 1px solid #333;
-            padding-left: 20px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: #666;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #4ade80;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
-        }
-
-        .datetime {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: #fff;
-        }
-
-        .back-btn {
-            padding: 8px 16px;
-            background: none;
-            border: 1px solid #333;
-            color: #666;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-        }
-
-        .back-btn:hover {
-            border-color: #fff;
-            color: #fff;
-        }
+        .header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background: rgba(0,0,0,0.95); border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 5px; }
+        .back-btn { padding: 8px 16px; background: none; border: 1px solid #333; color: #666; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px; cursor: pointer; text-decoration: none; transition: all 0.3s; }
+        .back-btn:hover { border-color: #fff; color: #fff; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .status-box { font-size: 10px; color: #666; letter-spacing: 2px; }
+        .status-box span { color: #4ade80; }
 
         /* Map Container */
-        #map {
-            position: fixed;
-            top: 60px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #0a0a0a;
-        }
+        #map { position: absolute; top: 50px; left: 0; right: 0; bottom: 0; background: #0a0a0f; z-index: 1; }
 
-        .leaflet-container {
-            background: #0a0a0a;
-        }
+        /* Loading Screen */
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; transition: opacity 0.5s; }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loading-logo { font-family: 'Orbitron', sans-serif; font-size: 48px; letter-spacing: 10px; margin-bottom: 10px; }
+        .loading-subtitle { font-size: 10px; letter-spacing: 5px; color: #444; margin-bottom: 40px; }
+        .loading-status { font-size: 11px; color: #666; margin-bottom: 20px; }
+        .loading-bar { width: 300px; height: 2px; background: #1a1a1a; overflow: hidden; }
+        .loading-fill { height: 100%; background: #fff; width: 0%; transition: width 0.3s; }
 
-        /* Breaking News Ticker */
-        .breaking-ticker {
-            position: fixed;
-            top: 60px;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background: rgba(255, 50, 50, 0.95);
-            display: none;
-            align-items: center;
-            overflow: hidden;
-            z-index: 900;
-        }
+        /* Sidebar - Article List */
+        .sidebar { position: fixed; top: 50px; right: 0; width: 380px; bottom: 0; background: rgba(0,0,0,0.95); border-left: 1px solid #1a1a1a; z-index: 500; display: flex; flex-direction: column; transition: transform 0.3s; }
+        .sidebar.collapsed { transform: translateX(100%); }
+        .sidebar-toggle { position: absolute; left: -40px; top: 50%; transform: translateY(-50%); width: 40px; height: 80px; background: rgba(0,0,0,0.9); border: 1px solid #1a1a1a; border-right: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: #666; }
+        .sidebar-toggle:hover { color: #fff; }
+        
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #1a1a1a; }
+        .sidebar-title { font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 3px; margin-bottom: 10px; }
+        .sidebar-stats { display: flex; gap: 20px; font-size: 10px; color: #666; }
+        .sidebar-stats span { color: #fff; }
+        
+        .sidebar-search { padding: 15px 20px; border-bottom: 1px solid #1a1a1a; }
+        .sidebar-search input { width: 100%; padding: 10px 15px; background: rgba(255,255,255,0.05); border: 1px solid #222; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+        .sidebar-search input:focus { outline: none; border-color: #444; }
+        .sidebar-search input::placeholder { color: #444; }
+        
+        .article-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .article-list::-webkit-scrollbar { width: 4px; }
+        .article-list::-webkit-scrollbar-track { background: #0a0a0a; }
+        .article-list::-webkit-scrollbar-thumb { background: #333; }
 
-        .breaking-ticker.active {
-            display: flex;
-        }
+        .article-item { padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .article-item:hover { border-color: #333; background: rgba(255,255,255,0.05); }
+        .article-item.active { border-color: #4ade80; background: rgba(74,222,128,0.1); }
+        .article-item-source { font-size: 9px; color: #666; letter-spacing: 1px; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .article-item-source .country-flag { }
+        .article-item-title { font-size: 12px; line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .article-item-countries { display: flex; flex-wrap: wrap; gap: 5px; }
+        .article-item-country { padding: 2px 6px; background: rgba(255,255,255,0.1); font-size: 8px; letter-spacing: 1px; }
+        .article-item-country.primary { background: rgba(74,222,128,0.3); color: #4ade80; }
 
-        .breaking-label {
-            background: #fff;
-            color: #ff3333;
-            padding: 8px 20px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            white-space: nowrap;
-            animation: flashLabel 1s infinite;
-        }
-
-        @keyframes flashLabel {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .breaking-content {
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .breaking-scroll {
-            display: flex;
-            gap: 100px;
-            animation: scrollTicker 30s linear infinite;
-            white-space: nowrap;
-            padding-left: 100%;
-        }
-
-        @keyframes scrollTicker {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        .breaking-item {
-            font-size: 12px;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .breaking-item:hover {
-            opacity: 0.7;
-        }
-
-        /* Side Panel */
-        .side-panel {
-            position: fixed;
-            top: 60px;
-            right: -450px;
-            width: 450px;
-            height: calc(100vh - 60px);
-            background: rgba(5, 5, 10, 0.98);
-            border-left: 1px solid #1a1a1a;
-            z-index: 800;
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .side-panel.open {
-            right: 0;
-        }
-
-        .panel-header {
-            padding: 25px;
-            border-bottom: 1px solid #1a1a1a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .panel-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            letter-spacing: 3px;
-        }
-
-        .panel-country {
-            font-size: 11px;
-            color: #666;
-            letter-spacing: 2px;
-            margin-top: 5px;
-        }
-
-        .panel-close {
-            background: none;
-            border: none;
-            color: #666;
-            font-size: 24px;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .panel-close:hover {
-            color: #fff;
-        }
-
-        .panel-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background: #1a1a1a;
-            border-bottom: 1px solid #1a1a1a;
-        }
-
-        .panel-stat {
-            background: #0a0a0f;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .panel-stat-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .panel-stat-label {
-            font-size: 8px;
-            letter-spacing: 2px;
-            color: #444;
-            margin-top: 5px;
-        }
-
-        .panel-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .panel-content::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .panel-content::-webkit-scrollbar-track {
-            background: #0a0a0a;
-        }
-
-        .panel-content::-webkit-scrollbar-thumb {
-            background: #333;
-        }
-
-        /* Article Cards */
-        .article-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid #1a1a1a;
-            margin-bottom: 15px;
-            transition: all 0.3s;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .article-card:hover {
-            border-color: #333;
-            transform: translateX(-5px);
-        }
-
-        .article-card.breaking {
-            border-color: rgba(255, 50, 50, 0.5);
-            background: rgba(255, 50, 50, 0.05);
-        }
-
-        .article-image {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            filter: grayscale(30%);
-            transition: filter 0.3s;
-        }
-
-        .article-card:hover .article-image {
-            filter: grayscale(0%);
-        }
-
-        .article-image-placeholder {
-            width: 100%;
-            height: 120px;
-            background: linear-gradient(135deg, #111 0%, #1a1a2e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            opacity: 0.3;
-        }
-
-        .article-body {
-            padding: 15px;
-        }
-
-        .article-category {
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: #666;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .article-category .breaking-badge {
-            background: #ff3333;
-            color: #fff;
-            padding: 2px 8px;
-            font-size: 8px;
-            animation: flashLabel 1s infinite;
-        }
-
-        .article-title {
-            font-size: 13px;
-            line-height: 1.4;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .article-meta {
-            font-size: 10px;
-            color: #444;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Stats Overlay */
-        .stats-overlay {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            background: rgba(5, 5, 10, 0.95);
-            border: 1px solid #1a1a1a;
-            padding: 20px;
-            z-index: 500;
-        }
-
-        .stats-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: #444;
-            margin-bottom: 15px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .stat-label {
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: #444;
-            margin-top: 5px;
-        }
+        /* Article Panel */
+        .article-panel { position: fixed; bottom: 20px; left: 20px; width: 500px; max-height: 60vh; background: rgba(0,0,0,0.95); border: 1px solid #1a1a1a; z-index: 800; display: none; flex-direction: column; }
+        .article-panel.show { display: flex; }
+        .article-panel-header { padding: 15px 20px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+        .article-panel-title { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 2px; }
+        .article-panel-close { background: none; border: none; color: #666; font-size: 20px; cursor: pointer; }
+        .article-panel-close:hover { color: #fff; }
+        
+        .article-panel-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .article-panel-content::-webkit-scrollbar { width: 4px; }
+        .article-panel-content::-webkit-scrollbar-thumb { background: #333; }
+        
+        .panel-source { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #1a1a1a; }
+        .panel-source-icon { width: 32px; height: 32px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .panel-source-info { flex: 1; }
+        .panel-source-name { font-size: 10px; letter-spacing: 2px; }
+        .panel-source-time { font-size: 9px; color: #666; }
+        .panel-open-btn { padding: 8px 12px; background: #fff; color: #000; border: none; font-family: 'Orbitron', sans-serif; font-size: 8px; letter-spacing: 1px; cursor: pointer; }
+        .panel-open-btn:hover { background: #ccc; }
+        
+        .panel-article-title { font-family: 'Merriweather', serif; font-size: 18px; line-height: 1.4; margin-bottom: 15px; }
+        
+        .panel-countries { margin-bottom: 15px; }
+        .panel-countries-label { font-size: 9px; color: #666; letter-spacing: 2px; margin-bottom: 8px; }
+        .panel-countries-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .panel-country-tag { padding: 5px 10px; background: rgba(255,255,255,0.1); font-size: 10px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
+        .panel-country-tag.primary { background: rgba(74,222,128,0.3); color: #4ade80; }
+        .panel-country-tag .flag { font-size: 14px; }
+        
+        .panel-keywords { margin-top: 15px; padding-top: 15px; border-top: 1px solid #1a1a1a; }
+        .panel-keywords-label { font-size: 9px; color: #666; letter-spacing: 2px; margin-bottom: 8px; }
+        .panel-keywords-list { display: flex; flex-wrap: wrap; gap: 5px; }
+        .panel-keyword { padding: 3px 8px; background: rgba(255,255,255,0.05); font-size: 9px; color: #888; }
 
         /* Country Info Tooltip */
-        .country-tooltip {
-            position: fixed;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid #333;
-            padding: 15px 20px;
-            pointer-events: none;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.2s;
-            font-family: 'Share Tech Mono', monospace;
-        }
+        .country-tooltip { position: fixed; padding: 15px 20px; background: rgba(0,0,0,0.95); border: 1px solid #333; z-index: 1500; pointer-events: none; display: none; min-width: 200px; }
+        .country-tooltip.show { display: block; }
+        .country-tooltip-name { font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; }
+        .country-tooltip-count { font-size: 11px; color: #4ade80; }
 
-        .country-tooltip.visible {
-            opacity: 1;
-        }
-
-        .country-tooltip-name {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
-        }
-
-        .country-tooltip-stats {
-            font-size: 11px;
-            color: #666;
-        }
-
-        .country-tooltip-stats span {
-            color: #fff;
-        }
-
-        /* Loading */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            transition: opacity 0.5s;
-        }
-
-        .loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 48px;
-            font-weight: 900;
-            letter-spacing: 10px;
-            margin-bottom: 30px;
-            animation: glitch 2s infinite;
-        }
-
-        @keyframes glitch {
-            0%, 90%, 100% { transform: translate(0); }
-            92% { transform: translate(-3px, 1px); }
-            94% { transform: translate(3px, -1px); }
-            96% { transform: translate(-1px, -2px); }
-            98% { transform: translate(1px, 2px); }
-        }
-
-        .loading-bar {
-            width: 200px;
-            height: 2px;
-            background: #111;
-            overflow: hidden;
-        }
-
-        .loading-progress {
-            width: 0%;
-            height: 100%;
-            background: #fff;
-            animation: loadProgress 2s ease-out forwards;
-        }
-
-        @keyframes loadProgress {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-
-        .loading-text {
-            margin-top: 20px;
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: #444;
-        }
-
-        /* No Articles */
-        .no-articles {
-            text-align: center;
-            padding: 40px 20px;
-            color: #444;
-        }
-
-        .no-articles-icon {
-            font-size: 40px;
-            margin-bottom: 15px;
-            opacity: 0.3;
-        }
-
-        .no-articles-text {
-            font-size: 11px;
-            letter-spacing: 2px;
-        }
+        /* Map Styles */
+        .leaflet-container { background: #0a0a0f !important; }
+        .leaflet-control-zoom { display: none; }
+        .leaflet-control-attribution { display: none; }
 
         /* Legend */
-        .legend {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: rgba(5, 5, 10, 0.95);
-            border: 1px solid #1a1a1a;
-            padding: 15px 20px;
-            z-index: 500;
-        }
-
-        .legend-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 9px;
-            letter-spacing: 2px;
-            color: #444;
-            margin-bottom: 10px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            font-size: 10px;
-            color: #666;
-        }
-
-        .legend-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 12px;
-            border: 1px solid;
-        }
-
-        .legend-color.none {
-            background: transparent;
-            border-color: #333;
-        }
-
-        .legend-color.low {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .legend-color.medium {
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-
-        .legend-color.high {
-            background: rgba(255, 255, 255, 0.4);
-            border-color: rgba(255, 255, 255, 0.7);
-        }
-
-        .legend-color.breaking {
-            background: rgba(255, 50, 50, 0.4);
-            border-color: #ff3333;
-        }
+        .map-legend { position: fixed; bottom: 20px; right: 400px; background: rgba(0,0,0,0.9); border: 1px solid #1a1a1a; padding: 15px; z-index: 500; }
+        .map-legend-title { font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: 2px; margin-bottom: 10px; color: #666; }
+        .map-legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 10px; }
+        .map-legend-color { width: 20px; height: 12px; }
+        .sidebar.collapsed ~ .map-legend { right: 20px; }
     </style>
 </head>
 <body>
     <div class="scanlines"></div>
 
-    <!-- Loading Screen -->
+    <!-- Loading -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-logo">ATLAS</div>
-        <div class="loading-bar">
-            <div class="loading-progress"></div>
-        </div>
-        <div class="loading-text">LOADING GEOPOLITICAL DATA...</div>
+        <div class="loading-subtitle">GLOBAL NEWS MAP</div>
+        <div class="loading-status" id="loadingStatus">Initialisiere...</div>
+        <div class="loading-bar"><div class="loading-fill" id="loadingFill"></div></div>
     </div>
 
     <!-- Header -->
     <header class="header">
         <div class="header-left">
             <div class="logo">ATLAS</div>
-            <div class="logo-sub">GLOBAL INTELLIGENCE MAP</div>
+            <a href="index.html" class="back-btn">← ZURÜCK</a>
         </div>
         <div class="header-right">
-            <div class="status-indicator">
-                <div class="status-dot"></div>
-                <span>LIVE</span>
-            </div>
-            <div class="datetime" id="datetime"></div>
-            <a href="index.html" class="back-btn">← ZURÜCK</a>
+            <div class="status-box">ARTIKEL: <span id="totalArticles">0</span></div>
+            <div class="status-box">LÄNDER: <span id="totalCountries">0</span></div>
+            <div class="status-box" id="currentTime">--:--:--</div>
         </div>
     </header>
 
-    <!-- Breaking News Ticker -->
-    <div class="breaking-ticker" id="breakingTicker">
-        <div class="breaking-label">⚡ EILMELDUNG</div>
-        <div class="breaking-content">
-            <div class="breaking-scroll" id="breakingScroll"></div>
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-toggle" id="sidebarToggle">◀</div>
+        <div class="sidebar-header">
+            <div class="sidebar-title">LIVE NEWS FEED</div>
+            <div class="sidebar-stats">
+                <span id="filteredCount">0</span> Artikel
+            </div>
         </div>
+        <div class="sidebar-search">
+            <input type="text" id="searchInput" placeholder="Suche nach Land, Thema, Keyword...">
+        </div>
+        <div class="article-list" id="articleList"></div>
+    </div>
+
+    <!-- Article Panel -->
+    <div class="article-panel" id="articlePanel">
+        <div class="article-panel-header">
+            <div class="article-panel-title">ARTIKEL DETAILS</div>
+            <button class="article-panel-close" id="panelClose">×</button>
+        </div>
+        <div class="article-panel-content" id="panelContent"></div>
     </div>
 
     <!-- Country Tooltip -->
     <div class="country-tooltip" id="countryTooltip">
         <div class="country-tooltip-name" id="tooltipName"></div>
-        <div class="country-tooltip-stats" id="tooltipStats"></div>
-    </div>
-
-    <!-- Map -->
-    <div id="map"></div>
-
-    <!-- Side Panel -->
-    <div class="side-panel" id="sidePanel">
-        <div class="panel-header">
-            <div>
-                <div class="panel-title" id="panelTitle">LAND AUSWÄHLEN</div>
-                <div class="panel-country" id="panelCountry"></div>
-            </div>
-            <button class="panel-close" id="panelClose">&times;</button>
-        </div>
-        <div class="panel-stats">
-            <div class="panel-stat">
-                <div class="panel-stat-value" id="panelArticles">0</div>
-                <div class="panel-stat-label">ARTIKEL</div>
-            </div>
-            <div class="panel-stat">
-                <div class="panel-stat-value" id="panelBreaking">0</div>
-                <div class="panel-stat-label">EILMELDUNGEN</div>
-            </div>
-            <div class="panel-stat">
-                <div class="panel-stat-value" id="panelCategories">0</div>
-                <div class="panel-stat-label">KATEGORIEN</div>
-            </div>
-        </div>
-        <div class="panel-content" id="panelContent">
-            <div class="no-articles">
-                <div class="no-articles-icon">🌍</div>
-                <div class="no-articles-text">LAND AUSWÄHLEN</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stats Overlay -->
-    <div class="stats-overlay">
-        <div class="stats-title">GLOBAL STATISTICS</div>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value" id="totalArticles">0</div>
-                <div class="stat-label">ARTIKEL</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalCountries">0</div>
-                <div class="stat-label">LÄNDER</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalBreaking">0</div>
-                <div class="stat-label">EILMELDUNGEN</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalToday">0</div>
-                <div class="stat-label">HEUTE</div>
-            </div>
-        </div>
+        <div class="country-tooltip-count" id="tooltipCount"></div>
     </div>
 
     <!-- Legend -->
-    <div class="legend">
-        <div class="legend-title">INTEL DENSITY</div>
-        <div class="legend-item">
-            <div class="legend-color none"></div>
-            <span>Keine Daten</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color low"></div>
-            <span>1-2 Artikel</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color medium"></div>
-            <span>3-5 Artikel</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color high"></div>
-            <span>6+ Artikel</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color breaking"></div>
-            <span>Eilmeldung</span>
-        </div>
+    <div class="map-legend">
+        <div class="map-legend-title">ARTIKEL DICHTE</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: #1a472a;"></div> 1-2 Artikel</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: #2d6a4f;"></div> 3-5 Artikel</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: #40916c;"></div> 6-10 Artikel</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: #52b788;"></div> 11-20 Artikel</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: #74c69d;"></div> 20+ Artikel</div>
+        <div class="map-legend-item"><div class="map-legend-color" style="background: #ff6b6b;"></div> Hervorgehoben</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            query, 
-            where,
-            orderBy,
-            onSnapshot 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyDrrnWy5d5tlHlxi965WGc_7Gs3GIXY0Qw",
-            authDomain: "atlas-4e16d.firebaseapp.com",
-            projectId: "atlas-4e16d",
-            storageBucket: "atlas-4e16d.firebasestorage.app",
-            messagingSenderId: "494472010986",
-            appId: "1:494472010986:web:9659fd71b4bcede8770b93"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // Country code mapping (ISO 3166-1 alpha-2 to alpha-3)
-        const countryCodeMap = {
-            'AF': 'AFG', 'EG': 'EGY', 'AL': 'ALB', 'DZ': 'DZA', 'AR': 'ARG',
-            'AM': 'ARM', 'AZ': 'AZE', 'ET': 'ETH', 'AU': 'AUS', 'BE': 'BEL',
-            'BO': 'BOL', 'BA': 'BIH', 'BR': 'BRA', 'BG': 'BGR', 'CL': 'CHL',
-            'CN': 'CHN', 'DK': 'DNK', 'DE': 'DEU', 'EC': 'ECU', 'EE': 'EST',
-            'FI': 'FIN', 'FR': 'FRA', 'GE': 'GEO', 'GH': 'GHA', 'GR': 'GRC',
-            'GB': 'GBR', 'IN': 'IND', 'ID': 'IDN', 'IQ': 'IRQ', 'IR': 'IRN',
-            'IE': 'IRL', 'IS': 'ISL', 'IL': 'ISR', 'IT': 'ITA', 'JP': 'JPN',
-            'YE': 'YEM', 'JO': 'JOR', 'CA': 'CAN', 'KZ': 'KAZ', 'KE': 'KEN',
-            'CO': 'COL', 'HR': 'HRV', 'CU': 'CUB', 'LV': 'LVA', 'LB': 'LBN',
-            'LY': 'LBY', 'LT': 'LTU', 'MY': 'MYS', 'MA': 'MAR', 'MX': 'MEX',
-            'MD': 'MDA', 'MN': 'MNG', 'ME': 'MNE', 'MM': 'MMR', 'NZ': 'NZL',
-            'NL': 'NLD', 'NG': 'NGA', 'KP': 'PRK', 'MK': 'MKD', 'NO': 'NOR',
-            'AT': 'AUT', 'PK': 'PAK', 'PS': 'PSE', 'PA': 'PAN', 'PE': 'PER',
-            'PH': 'PHL', 'PL': 'POL', 'PT': 'PRT', 'RO': 'ROU', 'RU': 'RUS',
-            'SA': 'SAU', 'SE': 'SWE', 'CH': 'CHE', 'RS': 'SRB', 'SG': 'SGP',
-            'SK': 'SVK', 'SI': 'SVN', 'SO': 'SOM', 'ES': 'ESP', 'ZA': 'ZAF',
-            'KR': 'KOR', 'SD': 'SDN', 'SY': 'SYR', 'TW': 'TWN', 'TH': 'THA',
-            'CZ': 'CZE', 'TN': 'TUN', 'TR': 'TUR', 'UA': 'UKR', 'HU': 'HUN',
-            'US': 'USA', 'UZ': 'UZB', 'VE': 'VEN', 'AE': 'ARE', 'VN': 'VNM',
-            'BY': 'BLR'
-        };
-
-        // Country names
+    <script>
+        // ============ COUNTRY DATA ============
         const countryNames = {
-            'AFG': 'Afghanistan', 'EGY': 'Ägypten', 'ALB': 'Albanien', 'DZA': 'Algerien',
-            'ARG': 'Argentinien', 'ARM': 'Armenien', 'AZE': 'Aserbaidschan', 'ETH': 'Äthiopien',
-            'AUS': 'Australien', 'BEL': 'Belgien', 'BOL': 'Bolivien', 'BIH': 'Bosnien',
-            'BRA': 'Brasilien', 'BGR': 'Bulgarien', 'CHL': 'Chile', 'CHN': 'China',
-            'DNK': 'Dänemark', 'DEU': 'Deutschland', 'ECU': 'Ecuador', 'EST': 'Estland',
-            'FIN': 'Finnland', 'FRA': 'Frankreich', 'GEO': 'Georgien', 'GHA': 'Ghana',
-            'GRC': 'Griechenland', 'GBR': 'Großbritannien', 'IND': 'Indien', 'IDN': 'Indonesien',
-            'IRQ': 'Irak', 'IRN': 'Iran', 'IRL': 'Irland', 'ISL': 'Island',
-            'ISR': 'Israel', 'ITA': 'Italien', 'JPN': 'Japan', 'YEM': 'Jemen',
-            'JOR': 'Jordanien', 'CAN': 'Kanada', 'KAZ': 'Kasachstan', 'KEN': 'Kenia',
-            'COL': 'Kolumbien', 'HRV': 'Kroatien', 'CUB': 'Kuba', 'LVA': 'Lettland',
-            'LBN': 'Libanon', 'LBY': 'Libyen', 'LTU': 'Litauen', 'MYS': 'Malaysia',
-            'MAR': 'Marokko', 'MEX': 'Mexiko', 'MDA': 'Moldawien', 'MNG': 'Mongolei',
-            'MNE': 'Montenegro', 'MMR': 'Myanmar', 'NZL': 'Neuseeland', 'NLD': 'Niederlande',
-            'NGA': 'Nigeria', 'PRK': 'Nordkorea', 'MKD': 'Nordmazedonien', 'NOR': 'Norwegen',
-            'AUT': 'Österreich', 'PAK': 'Pakistan', 'PSE': 'Palästina', 'PAN': 'Panama',
-            'PER': 'Peru', 'PHL': 'Philippinen', 'POL': 'Polen', 'PRT': 'Portugal',
-            'ROU': 'Rumänien', 'RUS': 'Russland', 'SAU': 'Saudi-Arabien', 'SWE': 'Schweden',
-            'CHE': 'Schweiz', 'SRB': 'Serbien', 'SGP': 'Singapur', 'SVK': 'Slowakei',
-            'SVN': 'Slowenien', 'SOM': 'Somalia', 'ESP': 'Spanien', 'ZAF': 'Südafrika',
-            'KOR': 'Südkorea', 'SDN': 'Sudan', 'SYR': 'Syrien', 'TWN': 'Taiwan',
-            'THA': 'Thailand', 'CZE': 'Tschechien', 'TUN': 'Tunesien', 'TUR': 'Türkei',
-            'UKR': 'Ukraine', 'HUN': 'Ungarn', 'USA': 'USA', 'UZB': 'Usbekistan',
-            'VEN': 'Venezuela', 'ARE': 'VAE', 'VNM': 'Vietnam', 'BLR': 'Weißrussland'
+            'AFG': { name: 'Afghanistan', code: 'AF', flag: '🇦🇫', keywords: ['afghanistan', 'kabul', 'taliban', 'afghan'] },
+            'ALB': { name: 'Albanien', code: 'AL', flag: '🇦🇱', keywords: ['albania', 'albanien', 'tirana'] },
+            'DZA': { name: 'Algerien', code: 'DZ', flag: '🇩🇿', keywords: ['algeria', 'algerien', 'algier'] },
+            'ARG': { name: 'Argentinien', code: 'AR', flag: '🇦🇷', keywords: ['argentina', 'argentinien', 'buenos aires', 'milei'] },
+            'ARM': { name: 'Armenien', code: 'AM', flag: '🇦🇲', keywords: ['armenia', 'armenien', 'yerevan'] },
+            'AUS': { name: 'Australien', code: 'AU', flag: '🇦🇺', keywords: ['australia', 'australien', 'sydney', 'melbourne', 'canberra'] },
+            'AUT': { name: 'Österreich', code: 'AT', flag: '🇦🇹', keywords: ['austria', 'österreich', 'wien', 'vienna', 'austrian'] },
+            'AZE': { name: 'Aserbaidschan', code: 'AZ', flag: '🇦🇿', keywords: ['azerbaijan', 'aserbaidschan', 'baku'] },
+            'BLR': { name: 'Belarus', code: 'BY', flag: '🇧🇾', keywords: ['belarus', 'weißrussland', 'minsk', 'lukashenko'] },
+            'BEL': { name: 'Belgien', code: 'BE', flag: '🇧🇪', keywords: ['belgium', 'belgien', 'brüssel', 'brussels'] },
+            'BRA': { name: 'Brasilien', code: 'BR', flag: '🇧🇷', keywords: ['brazil', 'brasilien', 'brasilia', 'lula', 'bolsonaro'] },
+            'BGR': { name: 'Bulgarien', code: 'BG', flag: '🇧🇬', keywords: ['bulgaria', 'bulgarien', 'sofia'] },
+            'CAN': { name: 'Kanada', code: 'CA', flag: '🇨🇦', keywords: ['canada', 'kanada', 'ottawa', 'trudeau', 'canadian'] },
+            'CHL': { name: 'Chile', code: 'CL', flag: '🇨🇱', keywords: ['chile', 'santiago'] },
+            'CHN': { name: 'China', code: 'CN', flag: '🇨🇳', keywords: ['china', 'beijing', 'peking', 'shanghai', 'xi jinping', 'chinese', 'taiwan'] },
+            'COL': { name: 'Kolumbien', code: 'CO', flag: '🇨🇴', keywords: ['colombia', 'kolumbien', 'bogota'] },
+            'HRV': { name: 'Kroatien', code: 'HR', flag: '🇭🇷', keywords: ['croatia', 'kroatien', 'zagreb'] },
+            'CUB': { name: 'Kuba', code: 'CU', flag: '🇨🇺', keywords: ['cuba', 'kuba', 'havana', 'havanna'] },
+            'CYP': { name: 'Zypern', code: 'CY', flag: '🇨🇾', keywords: ['cyprus', 'zypern', 'nicosia'] },
+            'CZE': { name: 'Tschechien', code: 'CZ', flag: '🇨🇿', keywords: ['czech', 'tschechien', 'prague', 'prag'] },
+            'DNK': { name: 'Dänemark', code: 'DK', flag: '🇩🇰', keywords: ['denmark', 'dänemark', 'copenhagen', 'kopenhagen', 'greenland', 'grönland'] },
+            'EGY': { name: 'Ägypten', code: 'EG', flag: '🇪🇬', keywords: ['egypt', 'ägypten', 'cairo', 'kairo', 'suez'] },
+            'EST': { name: 'Estland', code: 'EE', flag: '🇪🇪', keywords: ['estonia', 'estland', 'tallinn'] },
+            'ETH': { name: 'Äthiopien', code: 'ET', flag: '🇪🇹', keywords: ['ethiopia', 'äthiopien', 'addis ababa'] },
+            'FIN': { name: 'Finnland', code: 'FI', flag: '🇫🇮', keywords: ['finland', 'finnland', 'helsinki'] },
+            'FRA': { name: 'Frankreich', code: 'FR', flag: '🇫🇷', keywords: ['france', 'frankreich', 'paris', 'macron', 'french'] },
+            'GEO': { name: 'Georgien', code: 'GE', flag: '🇬🇪', keywords: ['georgia', 'georgien', 'tbilisi', 'tiflis'] },
+            'DEU': { name: 'Deutschland', code: 'DE', flag: '🇩🇪', keywords: ['germany', 'deutschland', 'berlin', 'scholz', 'german', 'merz', 'bundesregierung'] },
+            'GRC': { name: 'Griechenland', code: 'GR', flag: '🇬🇷', keywords: ['greece', 'griechenland', 'athens', 'athen'] },
+            'GRL': { name: 'Grönland', code: 'GL', flag: '🇬🇱', keywords: ['greenland', 'grönland', 'nuuk'] },
+            'HUN': { name: 'Ungarn', code: 'HU', flag: '🇭🇺', keywords: ['hungary', 'ungarn', 'budapest', 'orban'] },
+            'ISL': { name: 'Island', code: 'IS', flag: '🇮🇸', keywords: ['iceland', 'island', 'reykjavik'] },
+            'IND': { name: 'Indien', code: 'IN', flag: '🇮🇳', keywords: ['india', 'indien', 'delhi', 'mumbai', 'modi', 'indian'] },
+            'IDN': { name: 'Indonesien', code: 'ID', flag: '🇮🇩', keywords: ['indonesia', 'indonesien', 'jakarta'] },
+            'IRN': { name: 'Iran', code: 'IR', flag: '🇮🇷', keywords: ['iran', 'tehran', 'teheran', 'iranian', 'persian'] },
+            'IRQ': { name: 'Irak', code: 'IQ', flag: '🇮🇶', keywords: ['iraq', 'irak', 'baghdad', 'bagdad'] },
+            'IRL': { name: 'Irland', code: 'IE', flag: '🇮🇪', keywords: ['ireland', 'irland', 'dublin', 'irish'] },
+            'ISR': { name: 'Israel', code: 'IL', flag: '🇮🇱', keywords: ['israel', 'jerusalem', 'tel aviv', 'netanyahu', 'israeli', 'gaza', 'hamas', 'idf', 'west bank'] },
+            'ITA': { name: 'Italien', code: 'IT', flag: '🇮🇹', keywords: ['italy', 'italien', 'rome', 'rom', 'milan', 'mailand', 'meloni', 'italian'] },
+            'JPN': { name: 'Japan', code: 'JP', flag: '🇯🇵', keywords: ['japan', 'tokyo', 'tokio', 'japanese'] },
+            'JOR': { name: 'Jordanien', code: 'JO', flag: '🇯🇴', keywords: ['jordan', 'jordanien', 'amman'] },
+            'KAZ': { name: 'Kasachstan', code: 'KZ', flag: '🇰🇿', keywords: ['kazakhstan', 'kasachstan', 'astana'] },
+            'KEN': { name: 'Kenia', code: 'KE', flag: '🇰🇪', keywords: ['kenya', 'kenia', 'nairobi'] },
+            'PRK': { name: 'Nordkorea', code: 'KP', flag: '🇰🇵', keywords: ['north korea', 'nordkorea', 'pyongyang', 'kim jong'] },
+            'KOR': { name: 'Südkorea', code: 'KR', flag: '🇰🇷', keywords: ['south korea', 'südkorea', 'seoul', 'korean'] },
+            'KWT': { name: 'Kuwait', code: 'KW', flag: '🇰🇼', keywords: ['kuwait'] },
+            'LVA': { name: 'Lettland', code: 'LV', flag: '🇱🇻', keywords: ['latvia', 'lettland', 'riga'] },
+            'LBN': { name: 'Libanon', code: 'LB', flag: '🇱🇧', keywords: ['lebanon', 'libanon', 'beirut', 'hezbollah'] },
+            'LBY': { name: 'Libyen', code: 'LY', flag: '🇱🇾', keywords: ['libya', 'libyen', 'tripoli'] },
+            'LTU': { name: 'Litauen', code: 'LT', flag: '🇱🇹', keywords: ['lithuania', 'litauen', 'vilnius'] },
+            'MYS': { name: 'Malaysia', code: 'MY', flag: '🇲🇾', keywords: ['malaysia', 'kuala lumpur'] },
+            'MEX': { name: 'Mexiko', code: 'MX', flag: '🇲🇽', keywords: ['mexico', 'mexiko', 'mexican'] },
+            'MDA': { name: 'Moldau', code: 'MD', flag: '🇲🇩', keywords: ['moldova', 'moldau', 'chisinau'] },
+            'MNG': { name: 'Mongolei', code: 'MN', flag: '🇲🇳', keywords: ['mongolia', 'mongolei'] },
+            'MAR': { name: 'Marokko', code: 'MA', flag: '🇲🇦', keywords: ['morocco', 'marokko', 'rabat'] },
+            'MMR': { name: 'Myanmar', code: 'MM', flag: '🇲🇲', keywords: ['myanmar', 'burma', 'yangon'] },
+            'NLD': { name: 'Niederlande', code: 'NL', flag: '🇳🇱', keywords: ['netherlands', 'niederlande', 'amsterdam', 'dutch', 'holland'] },
+            'NZL': { name: 'Neuseeland', code: 'NZ', flag: '🇳🇿', keywords: ['new zealand', 'neuseeland', 'wellington'] },
+            'NGA': { name: 'Nigeria', code: 'NG', flag: '🇳🇬', keywords: ['nigeria', 'lagos', 'abuja'] },
+            'NOR': { name: 'Norwegen', code: 'NO', flag: '🇳🇴', keywords: ['norway', 'norwegen', 'oslo', 'norwegian'] },
+            'PAK': { name: 'Pakistan', code: 'PK', flag: '🇵🇰', keywords: ['pakistan', 'islamabad', 'karachi'] },
+            'PSE': { name: 'Palästina', code: 'PS', flag: '🇵🇸', keywords: ['palestine', 'palästina', 'palestinian', 'gaza', 'west bank', 'ramallah'] },
+            'PAN': { name: 'Panama', code: 'PA', flag: '🇵🇦', keywords: ['panama'] },
+            'PER': { name: 'Peru', code: 'PE', flag: '🇵🇪', keywords: ['peru', 'lima'] },
+            'PHL': { name: 'Philippinen', code: 'PH', flag: '🇵🇭', keywords: ['philippines', 'philippinen', 'manila'] },
+            'POL': { name: 'Polen', code: 'PL', flag: '🇵🇱', keywords: ['poland', 'polen', 'warsaw', 'warschau', 'polish'] },
+            'PRT': { name: 'Portugal', code: 'PT', flag: '🇵🇹', keywords: ['portugal', 'lisbon', 'lissabon'] },
+            'QAT': { name: 'Katar', code: 'QA', flag: '🇶🇦', keywords: ['qatar', 'katar', 'doha'] },
+            'ROU': { name: 'Rumänien', code: 'RO', flag: '🇷🇴', keywords: ['romania', 'rumänien', 'bucharest', 'bukarest'] },
+            'RUS': { name: 'Russland', code: 'RU', flag: '🇷🇺', keywords: ['russia', 'russland', 'moscow', 'moskau', 'putin', 'kremlin', 'russian'] },
+            'SAU': { name: 'Saudi-Arabien', code: 'SA', flag: '🇸🇦', keywords: ['saudi', 'arabia', 'arabien', 'riyadh', 'riad', 'mbs'] },
+            'SRB': { name: 'Serbien', code: 'RS', flag: '🇷🇸', keywords: ['serbia', 'serbien', 'belgrade', 'belgrad'] },
+            'SGP': { name: 'Singapur', code: 'SG', flag: '🇸🇬', keywords: ['singapore', 'singapur'] },
+            'SVK': { name: 'Slowakei', code: 'SK', flag: '🇸🇰', keywords: ['slovakia', 'slowakei', 'bratislava'] },
+            'SVN': { name: 'Slowenien', code: 'SI', flag: '🇸🇮', keywords: ['slovenia', 'slowenien', 'ljubljana'] },
+            'ZAF': { name: 'Südafrika', code: 'ZA', flag: '🇿🇦', keywords: ['south africa', 'südafrika', 'johannesburg', 'pretoria'] },
+            'ESP': { name: 'Spanien', code: 'ES', flag: '🇪🇸', keywords: ['spain', 'spanien', 'madrid', 'barcelona', 'spanish'] },
+            'SDN': { name: 'Sudan', code: 'SD', flag: '🇸🇩', keywords: ['sudan', 'khartoum', 'khartum'] },
+            'SWE': { name: 'Schweden', code: 'SE', flag: '🇸🇪', keywords: ['sweden', 'schweden', 'stockholm', 'swedish'] },
+            'CHE': { name: 'Schweiz', code: 'CH', flag: '🇨🇭', keywords: ['switzerland', 'schweiz', 'bern', 'zürich', 'geneva', 'genf', 'swiss'] },
+            'SYR': { name: 'Syrien', code: 'SY', flag: '🇸🇾', keywords: ['syria', 'syrien', 'damascus', 'damaskus', 'assad'] },
+            'TWN': { name: 'Taiwan', code: 'TW', flag: '🇹🇼', keywords: ['taiwan', 'taipei', 'taiwanese'] },
+            'THA': { name: 'Thailand', code: 'TH', flag: '🇹🇭', keywords: ['thailand', 'bangkok'] },
+            'TUN': { name: 'Tunesien', code: 'TN', flag: '🇹🇳', keywords: ['tunisia', 'tunesien', 'tunis'] },
+            'TUR': { name: 'Türkei', code: 'TR', flag: '🇹🇷', keywords: ['turkey', 'türkei', 'ankara', 'istanbul', 'erdogan', 'turkish'] },
+            'UKR': { name: 'Ukraine', code: 'UA', flag: '🇺🇦', keywords: ['ukraine', 'kyiv', 'kiew', 'zelensky', 'ukrainian', 'crimea', 'krim', 'donbass'] },
+            'ARE': { name: 'VAE', code: 'AE', flag: '🇦🇪', keywords: ['emirates', 'uae', 'vae', 'dubai', 'abu dhabi'] },
+            'GBR': { name: 'Großbritannien', code: 'GB', flag: '🇬🇧', keywords: ['uk', 'britain', 'großbritannien', 'england', 'london', 'british', 'scotland', 'wales'] },
+            'USA': { name: 'USA', code: 'US', flag: '🇺🇸', keywords: ['usa', 'united states', 'america', 'washington', 'biden', 'trump', 'american', 'congress', 'white house', 'pentagon'] },
+            'UZB': { name: 'Usbekistan', code: 'UZ', flag: '🇺🇿', keywords: ['uzbekistan', 'usbekistan', 'tashkent'] },
+            'VEN': { name: 'Venezuela', code: 'VE', flag: '🇻🇪', keywords: ['venezuela', 'caracas', 'maduro'] },
+            'VNM': { name: 'Vietnam', code: 'VN', flag: '🇻🇳', keywords: ['vietnam', 'hanoi', 'vietnamese'] },
+            'YEM': { name: 'Jemen', code: 'YE', flag: '🇾🇪', keywords: ['yemen', 'jemen', 'sanaa', 'houthi'] }
         };
 
-        let map;
-        let geoJsonLayer;
-        let allArticles = [];
-        let countryArticles = {};
-        let currentUser = null;
+        // ============ NEWS SCRAPERS ============
+        const newsScrapers = [
+            { name: 'tagesschau', displayName: 'Tagesschau', url: 'https://www.tagesschau.de/xml/rss2/', category: 'Politik' },
+            { name: 'zeit', displayName: 'Die Zeit', url: 'https://newsfeed.zeit.de/index', category: 'Politik' },
+            { name: 'bild', displayName: 'BILD', url: 'https://www.bild.de/rssfeeds/rss3-20745882,feed=alles.bild.html', category: 'News' },
+            { name: 'dw', displayName: 'Deutsche Welle', url: 'https://rss.dw.com/rdf/rss-de-all', category: 'Politik' },
+            { name: 'cnn', displayName: 'CNN', url: 'http://rss.cnn.com/rss/edition_world.rss', category: 'Politik' },
+            { name: 'nbc', displayName: 'NBC News', url: 'https://feeds.nbcnews.com/nbcnews/public/world', category: 'Politik' },
+            { name: 'cbs', displayName: 'CBS News', url: 'https://www.cbsnews.com/latest/rss/world', category: 'Politik' },
+            { name: 'wapo', displayName: 'Washington Post', url: 'https://feeds.washingtonpost.com/rss/world', category: 'Politik' },
+            { name: 'npr', displayName: 'NPR', url: 'https://feeds.npr.org/1004/rss.xml', category: 'Politik' },
+            { name: 'pbs', displayName: 'PBS', url: 'https://www.pbs.org/newshour/feeds/rss/world', category: 'Politik' },
+            { name: 'bbc', displayName: 'BBC News', url: 'https://feeds.bbci.co.uk/news/world/rss.xml', category: 'Politik' },
+            { name: 'france24', displayName: 'France 24', url: 'https://www.france24.com/en/rss', category: 'Politik' },
+            { name: 'euronews', displayName: 'Euronews', url: 'https://www.euronews.com/rss?level=theme&name=news', category: 'Politik' },
+            { name: 'nzz', displayName: 'NZZ', url: 'https://www.nzz.ch/international.rss', category: 'Politik' },
+            { name: 'orf', displayName: 'ORF', url: 'https://rss.orf.at/news.xml', category: 'Politik' }
+        ];
 
-        // Initialize
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                initMap();
-                loadArticles();
-            } else {
-                window.location.href = 'index.html';
+        let articles = [];
+        let countryArticles = {}; // ISO3 -> [articles]
+        let geojsonLayer = null;
+        let map = null;
+        let highlightedCountries = new Set();
+        let selectedArticle = null;
+
+        // ============ COUNTRY DETECTION ============
+        function detectCountries(text) {
+            const lowerText = text.toLowerCase();
+            const detected = {};
+
+            for (const [iso3, data] of Object.entries(countryNames)) {
+                let score = 0;
+                for (const keyword of data.keywords) {
+                    const regex = new RegExp('\\b' + keyword + '\\b', 'gi');
+                    const matches = lowerText.match(regex);
+                    if (matches) {
+                        score += matches.length;
+                    }
+                }
+                if (score > 0) {
+                    detected[iso3] = score;
+                }
             }
-        });
 
-        async function initMap() {
+            // Sort by score
+            const sorted = Object.entries(detected).sort((a, b) => b[1] - a[1]);
+            return sorted.map(([iso3, score]) => ({ iso3, score, ...countryNames[iso3] }));
+        }
+
+        // ============ FETCH WITH PROXY ============
+        async function fetchWithProxy(url) {
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+            for (const proxyUrl of proxies) {
+                try {
+                    const r = await fetch(proxyUrl);
+                    if (r.ok) return await r.text();
+                } catch (e) { continue; }
+            }
+            throw new Error('Proxy failed');
+        }
+
+        // ============ PARSE RSS ============
+        function parseRSS(xml, source) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xml, 'text/xml');
+            const items = doc.querySelectorAll('item');
+            const results = [];
+            const now = new Date();
+            const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+
+            items.forEach(item => {
+                try {
+                    const pubDateStr = item.querySelector('pubDate')?.textContent;
+                    const pubDate = pubDateStr ? new Date(pubDateStr) : new Date();
+                    if (pubDateStr && pubDate < oneDayAgo) return;
+
+                    const title = item.querySelector('title')?.textContent?.replace(/<[^>]*>/g, '').trim() || '';
+                    const link = item.querySelector('link')?.textContent?.trim() || '';
+                    const description = item.querySelector('description')?.textContent?.replace(/<[^>]*>/g, '').trim() || '';
+
+                    if (!title || !link) return;
+
+                    // Detect countries
+                    const fullText = title + ' ' + description;
+                    const countries = detectCountries(fullText);
+
+                    if (countries.length > 0) {
+                        results.push({
+                            id: 'art_' + Math.random().toString(36).substr(2, 9),
+                            title,
+                            url: link,
+                            description: description.substring(0, 200),
+                            source,
+                            createdAt: pubDate,
+                            countries, // Array of detected countries with scores
+                            primaryCountry: countries[0]?.iso3 || null
+                        });
+                    }
+                } catch (e) {}
+            });
+
+            return results;
+        }
+
+        // ============ SCRAPE ALL NEWS ============
+        async function scrapeNews() {
+            const statusEl = document.getElementById('loadingStatus');
+            const fillEl = document.getElementById('loadingFill');
+            
+            articles = [];
+            let completed = 0;
+
+            for (const scraper of newsScrapers) {
+                statusEl.textContent = `Lade ${scraper.displayName}...`;
+                fillEl.style.width = ((completed / newsScrapers.length) * 100) + '%';
+
+                try {
+                    const xml = await Promise.race([
+                        fetchWithProxy(scraper.url),
+                        new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 10000))
+                    ]);
+                    const parsed = parseRSS(xml, scraper.displayName);
+                    articles.push(...parsed);
+                } catch (e) {
+                    console.log(`${scraper.name} failed`);
+                }
+
+                completed++;
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            // Remove duplicates
+            const seen = new Set();
+            articles = articles.filter(a => {
+                if (seen.has(a.url)) return false;
+                seen.add(a.url);
+                return true;
+            });
+
+            // Sort by date
+            articles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            // Group by country
+            countryArticles = {};
+            articles.forEach(article => {
+                article.countries.forEach(country => {
+                    if (!countryArticles[country.iso3]) {
+                        countryArticles[country.iso3] = [];
+                    }
+                    countryArticles[country.iso3].push(article);
+                });
+            });
+
+            fillEl.style.width = '100%';
+            statusEl.textContent = `${articles.length} Artikel geladen!`;
+
+            document.getElementById('totalArticles').textContent = articles.length;
+            document.getElementById('totalCountries').textContent = Object.keys(countryArticles).length;
+        }
+
+        // ============ MAP ============
+        function initMap() {
             map = L.map('map', {
                 center: [30, 10],
                 zoom: 2.5,
                 minZoom: 2,
                 maxZoom: 8,
-                zoomControl: false
+                zoomControl: false,
+                attributionControl: false
             });
-
-            // Dark tile layer
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-                attribution: '© OpenStreetMap © CARTO'
-            }).addTo(map);
-
-            L.control.zoom({ position: 'topright' }).addTo(map);
 
             // Load GeoJSON
-            try {
-                const response = await fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson');
-                const geoData = await response.json();
-                
-                geoJsonLayer = L.geoJSON(geoData, {
-                    style: defaultStyle,
-                    onEachFeature: onEachFeature
-                }).addTo(map);
-
-                // Update styles if articles already loaded
-                if (Object.keys(countryArticles).length > 0) {
-                    updateCountryStyles();
-                }
-
-                // Hide loading
-                setTimeout(() => {
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                }, 1500);
-            } catch (error) {
-                console.error('Error loading GeoJSON:', error);
-                document.getElementById('loadingOverlay').classList.add('hidden');
-            }
-        }
-
-        function defaultStyle(feature) {
-            return {
-                fillColor: 'transparent',
-                fillOpacity: 0,
-                color: '#333',
-                weight: 1,
-                opacity: 0.5
-            };
-        }
-
-        function getCountryStyle(countryCode, articles) {
-            if (!articles || articles.length === 0) {
-                return {
-                    fillColor: 'transparent',
-                    fillOpacity: 0,
-                    color: '#333',
-                    weight: 1,
-                    opacity: 0.5
-                };
-            }
-
-            const hasBreaking = articles.some(a => a.isBreaking);
-            const count = articles.length;
-
-            if (hasBreaking) {
-                return {
-                    fillColor: '#ff3333',
-                    fillOpacity: 0.4,
-                    color: '#ff3333',
-                    weight: 2,
-                    opacity: 1
-                };
-            }
-
-            let fillOpacity;
-            if (count >= 6) {
-                fillOpacity = 0.4;
-            } else if (count >= 3) {
-                fillOpacity = 0.25;
-            } else {
-                fillOpacity = 0.1;
-            }
-
-            return {
-                fillColor: '#ffffff',
-                fillOpacity: fillOpacity,
-                color: 'rgba(255, 255, 255, 0.5)',
-                weight: 1.5,
-                opacity: 1
-            };
-        }
-
-        function onEachFeature(feature, layer) {
-            const countryCode = feature.properties.ISO_A3;
-            
-            layer.on({
-                mouseover: (e) => highlightFeature(e, countryCode, feature),
-                mouseout: resetHighlight,
-                mousemove: moveTooltip,
-                click: () => onCountryClick(countryCode, feature)
-            });
-        }
-
-        function highlightFeature(e, countryCode, feature) {
-            const layer = e.target;
-            const articles = countryArticles[countryCode] || [];
-            
-            layer.setStyle({
-                weight: 3,
-                color: articles.some(a => a.isBreaking) ? '#ff5555' : '#ffffff',
-                fillOpacity: Math.min((layer.options.fillOpacity || 0) + 0.15, 0.6)
-            });
-
-            layer.bringToFront();
-
-            // Show tooltip
-            const tooltip = document.getElementById('countryTooltip');
-            const name = countryNames[countryCode] || (feature && feature.properties && feature.properties.ADMIN) || countryCode || 'Unbekannt';
-            const count = articles.length;
-            const breaking = articles.filter(a => a.isBreaking).length;
-
-            document.getElementById('tooltipName').textContent = name;
-            document.getElementById('tooltipStats').innerHTML = count > 0 
-                ? `<span>${count}</span> Artikel ${breaking > 0 ? `| <span style="color:#ff3333">${breaking}</span> Eilmeldungen` : ''}`
-                : 'Keine Artikel';
-
-            tooltip.classList.add('visible');
-        }
-
-        function moveTooltip(e) {
-            const tooltip = document.getElementById('countryTooltip');
-            tooltip.style.left = (e.originalEvent.pageX + 15) + 'px';
-            tooltip.style.top = (e.originalEvent.pageY + 15) + 'px';
-        }
-
-        function resetHighlight(e) {
-            const layer = e.target;
-            const countryCode = layer.feature.properties.ISO_A3;
-            const articles = countryArticles[countryCode] || [];
-            
-            layer.setStyle(getCountryStyle(countryCode, articles));
-            
-            document.getElementById('countryTooltip').classList.remove('visible');
-        }
-
-        function onCountryClick(countryCode, feature) {
-            const articles = countryArticles[countryCode] || [];
-            const name = countryNames[countryCode] || (feature && feature.properties && feature.properties.ADMIN) || countryCode || 'Unbekannt';
-            
-            openPanel(name, countryCode, articles);
-        }
-
-        function loadArticles() {
-            const q = query(
-                collection(db, 'documents'),
-                where('userId', '==', currentUser.uid),
-                orderBy('createdAt', 'desc')
-            );
-
-            onSnapshot(q, (snapshot) => {
-                allArticles = [];
-                snapshot.forEach(doc => {
-                    allArticles.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Group by country (convert 2-letter to 3-letter code)
-                countryArticles = {};
-                allArticles.forEach(article => {
-                    if (!article.country) return;
-                    const code3 = countryCodeMap[article.country];
-                    if (!code3) return;
-                    
-                    if (!countryArticles[code3]) {
-                        countryArticles[code3] = [];
-                    }
-                    countryArticles[code3].push(article);
-                });
-
-                updateCountryStyles();
-                updateStats();
-                updateBreakingTicker();
-            });
-        }
-
-        function updateCountryStyles() {
-            if (!geoJsonLayer) return;
-
-            geoJsonLayer.eachLayer(layer => {
-                const countryCode = layer.feature.properties.ISO_A3;
-                const articles = countryArticles[countryCode] || [];
-                layer.setStyle(getCountryStyle(countryCode, articles));
-            });
-        }
-
-        function openPanel(name, countryCode, articles) {
-            const panel = document.getElementById('sidePanel');
-
-            document.getElementById('panelTitle').textContent = name.toUpperCase();
-            document.getElementById('panelCountry').textContent = `${articles.length} INTEL REPORTS`;
-            document.getElementById('panelArticles').textContent = articles.length;
-            document.getElementById('panelBreaking').textContent = articles.filter(a => a.isBreaking).length;
-            document.getElementById('panelCategories').textContent = new Set(articles.map(a => a.category)).size;
-
-            const content = document.getElementById('panelContent');
-            
-            if (articles.length === 0) {
-                content.innerHTML = `
-                    <div class="no-articles">
-                        <div class="no-articles-icon">📭</div>
-                        <div class="no-articles-text">KEINE ARTIKEL FÜR DIESES LAND</div>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = articles.map(article => `
-                    <div class="article-card ${article.isBreaking ? 'breaking' : ''}" onclick="window.open('${article.url}', '_blank')">
-                        ${article.imageUrl 
-                            ? `<img src="${article.imageUrl}" class="article-image" onerror="this.outerHTML='<div class=\\'article-image-placeholder\\'>📰</div>'">`
-                            : `<div class="article-image-placeholder">📰</div>`
+            fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+                .then(r => r.json())
+                .then(data => {
+                    geojsonLayer = L.geoJSON(data, {
+                        style: feature => getCountryStyle(feature.properties.ISO_A3),
+                        onEachFeature: (feature, layer) => {
+                            layer.on({
+                                mouseover: e => onCountryHover(e, feature),
+                                mouseout: onCountryLeave,
+                                click: e => onCountryClick(feature)
+                            });
                         }
-                        <div class="article-body">
-                            <div class="article-category">
-                                ${article.isBreaking ? '<span class="breaking-badge">⚡ EILMELDUNG</span>' : ''}
-                                ${article.category || 'ARTIKEL'}
-                            </div>
-                            <div class="article-title">${article.title}</div>
-                            <div class="article-meta">
-                                <span>${getDomain(article.url)}</span>
-                                <span>${formatDate(article.createdAt)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                    }).addTo(map);
+
+                    updateMapColors();
+                });
+        }
+
+        function getCountryStyle(iso3) {
+            const count = countryArticles[iso3]?.length || 0;
+            const isHighlighted = highlightedCountries.has(iso3);
+
+            let fillColor = '#111';
+            if (isHighlighted) {
+                fillColor = '#ff6b6b';
+            } else if (count > 20) {
+                fillColor = '#74c69d';
+            } else if (count > 10) {
+                fillColor = '#52b788';
+            } else if (count > 5) {
+                fillColor = '#40916c';
+            } else if (count > 2) {
+                fillColor = '#2d6a4f';
+            } else if (count > 0) {
+                fillColor = '#1a472a';
             }
 
-            panel.classList.add('open');
+            return {
+                fillColor,
+                weight: isHighlighted ? 2 : 1,
+                opacity: 1,
+                color: isHighlighted ? '#ff6b6b' : '#222',
+                fillOpacity: isHighlighted ? 0.8 : 0.7
+            };
         }
 
-        function updateStats() {
-            document.getElementById('totalArticles').textContent = allArticles.length;
-            document.getElementById('totalCountries').textContent = Object.keys(countryArticles).length;
-            document.getElementById('totalBreaking').textContent = allArticles.filter(a => a.isBreaking).length;
-            
-            const today = new Date().toDateString();
-            const todayCount = allArticles.filter(a => {
-                if (!a.createdAt) return false;
-                const date = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-                return date.toDateString() === today;
-            }).length;
-            document.getElementById('totalToday').textContent = todayCount;
+        function updateMapColors() {
+            if (!geojsonLayer) return;
+            geojsonLayer.eachLayer(layer => {
+                const iso3 = layer.feature.properties.ISO_A3;
+                layer.setStyle(getCountryStyle(iso3));
+            });
         }
 
-        function updateBreakingTicker() {
-            const breakingArticles = allArticles.filter(a => a.isBreaking);
-            const ticker = document.getElementById('breakingTicker');
-            const scroll = document.getElementById('breakingScroll');
+        function onCountryHover(e, feature) {
+            const iso3 = feature.properties.ISO_A3;
+            const count = countryArticles[iso3]?.length || 0;
+            const data = countryNames[iso3];
 
-            if (breakingArticles.length === 0) {
-                ticker.classList.remove('active');
+            if (count > 0 || highlightedCountries.has(iso3)) {
+                const tooltip = document.getElementById('countryTooltip');
+                tooltip.classList.add('show');
+                document.getElementById('tooltipName').textContent = `${data?.flag || ''} ${data?.name || feature.properties.ADMIN}`;
+                document.getElementById('tooltipCount').textContent = `${count} Artikel`;
+                
+                tooltip.style.left = (e.originalEvent.pageX + 15) + 'px';
+                tooltip.style.top = (e.originalEvent.pageY + 15) + 'px';
+            }
+
+            e.target.setStyle({ weight: 2, color: '#fff' });
+        }
+
+        function onCountryLeave(e) {
+            document.getElementById('countryTooltip').classList.remove('show');
+            const iso3 = e.target.feature.properties.ISO_A3;
+            e.target.setStyle(getCountryStyle(iso3));
+        }
+
+        function onCountryClick(feature) {
+            const iso3 = feature.properties.ISO_A3;
+            const countryData = countryNames[iso3];
+            if (countryData && countryArticles[iso3]?.length > 0) {
+                document.getElementById('searchInput').value = countryData.name;
+                filterArticles(countryData.name);
+            }
+        }
+
+        // ============ ARTICLE LIST ============
+        function renderArticleList(filteredArticles = articles) {
+            const list = document.getElementById('articleList');
+            document.getElementById('filteredCount').textContent = filteredArticles.length;
+
+            if (filteredArticles.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #444;">Keine Artikel gefunden</div>';
                 return;
             }
 
-            ticker.classList.add('active');
-            const items = breakingArticles.map(article => {
-                const countryCode3 = countryCodeMap[article.country];
-                const countryName = countryNames[countryCode3] || 'GLOBAL';
-                return `<span class="breaking-item" onclick="window.open('${article.url}', '_blank')">
-                    ⚡ ${article.title} [${countryName}]
-                </span>`;
+            list.innerHTML = filteredArticles.map(article => {
+                const primaryCountry = article.countries[0];
+                const otherCountries = article.countries.slice(1, 4);
+
+                return `
+                    <div class="article-item ${selectedArticle?.id === article.id ? 'active' : ''}" data-id="${article.id}">
+                        <div class="article-item-source">
+                            <span>${article.source}</span>
+                            <span>${formatTime(article.createdAt)}</span>
+                        </div>
+                        <div class="article-item-title">${article.title}</div>
+                        <div class="article-item-countries">
+                            ${primaryCountry ? `<span class="article-item-country primary">${primaryCountry.flag} ${primaryCountry.name}</span>` : ''}
+                            ${otherCountries.map(c => `<span class="article-item-country">${c.flag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
             }).join('');
-            
-            scroll.innerHTML = items + items;
+
+            // Add click handlers
+            list.querySelectorAll('.article-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const article = articles.find(a => a.id === item.dataset.id);
+                    if (article) showArticlePanel(article);
+                });
+            });
         }
 
-        // Helpers
-        function getDomain(url) {
-            try {
-                return new URL(url).hostname.replace('www.', '');
-            } catch {
-                return '-';
+        function showArticlePanel(article) {
+            selectedArticle = article;
+            
+            // Highlight countries on map
+            highlightedCountries = new Set(article.countries.map(c => c.iso3));
+            updateMapColors();
+
+            // Update panel
+            const panel = document.getElementById('articlePanel');
+            const content = document.getElementById('panelContent');
+
+            const primaryCountry = article.countries[0];
+            const allCountries = article.countries;
+
+            content.innerHTML = `
+                <div class="panel-source">
+                    <div class="panel-source-icon">📰</div>
+                    <div class="panel-source-info">
+                        <div class="panel-source-name">${article.source}</div>
+                        <div class="panel-source-time">${formatTime(article.createdAt)}</div>
+                    </div>
+                    <button class="panel-open-btn" onclick="window.open('${article.url}', '_blank')">ÖFFNEN →</button>
+                </div>
+                <div class="panel-article-title">${article.title}</div>
+                <div class="panel-countries">
+                    <div class="panel-countries-label">ERWÄHNTE LÄNDER</div>
+                    <div class="panel-countries-list">
+                        ${allCountries.map((c, i) => `
+                            <div class="panel-country-tag ${i === 0 ? 'primary' : ''}">
+                                <span class="flag">${c.flag}</span>
+                                ${c.name}
+                                <span style="opacity: 0.5; font-size: 8px;">(${c.score}x)</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ${article.description ? `<p style="color: #888; font-size: 12px; line-height: 1.6; margin-top: 15px;">${article.description}...</p>` : ''}
+            `;
+
+            panel.classList.add('show');
+            renderArticleList(); // Update active state
+
+            // Zoom to primary country
+            if (primaryCountry && geojsonLayer) {
+                geojsonLayer.eachLayer(layer => {
+                    if (layer.feature.properties.ISO_A3 === primaryCountry.iso3) {
+                        map.fitBounds(layer.getBounds(), { padding: [100, 100], maxZoom: 5 });
+                    }
+                });
             }
         }
 
-        function formatDate(timestamp) {
-            if (!timestamp) return '-';
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString('de-DE');
+        function hideArticlePanel() {
+            document.getElementById('articlePanel').classList.remove('show');
+            selectedArticle = null;
+            highlightedCountries.clear();
+            updateMapColors();
+            renderArticleList();
         }
 
-        // Update datetime
-        function updateDateTime() {
+        // ============ SEARCH / FILTER ============
+        function filterArticles(term) {
+            const lowerTerm = term.toLowerCase().trim();
+            
+            if (!lowerTerm) {
+                highlightedCountries.clear();
+                updateMapColors();
+                renderArticleList(articles);
+                return;
+            }
+
+            const filtered = articles.filter(article => {
+                const titleMatch = article.title.toLowerCase().includes(lowerTerm);
+                const sourceMatch = article.source.toLowerCase().includes(lowerTerm);
+                const countryMatch = article.countries.some(c => 
+                    c.name.toLowerCase().includes(lowerTerm) ||
+                    c.keywords.some(kw => kw.includes(lowerTerm))
+                );
+                return titleMatch || sourceMatch || countryMatch;
+            });
+
+            // Highlight matching countries
+            highlightedCountries.clear();
+            for (const [iso3, data] of Object.entries(countryNames)) {
+                if (data.name.toLowerCase().includes(lowerTerm) || 
+                    data.keywords.some(kw => kw.includes(lowerTerm))) {
+                    highlightedCountries.add(iso3);
+                }
+            }
+            updateMapColors();
+
+            renderArticleList(filtered);
+        }
+
+        // ============ HELPERS ============
+        function formatTime(date) {
+            if (!date) return '-';
+            const d = date instanceof Date ? date : new Date(date);
             const now = new Date();
-            document.getElementById('datetime').textContent = 
-                now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + 
-                ' ' + 
-                now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const diff = Math.floor((now - d) / 1000 / 60);
+            if (diff < 60) return `vor ${diff}m`;
+            if (diff < 1440) return `vor ${Math.floor(diff / 60)}h`;
+            return d.toLocaleDateString('de-DE');
         }
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
 
-        // Close panel
-        document.getElementById('panelClose').addEventListener('click', () => {
-            document.getElementById('sidePanel').classList.remove('open');
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('de-DE');
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // ============ EVENT LISTENERS ============
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            document.getElementById('sidebarToggle').textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
         });
+
+        document.getElementById('panelClose').addEventListener('click', hideArticlePanel);
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            filterArticles(e.target.value);
+        });
+
+        // ============ INIT ============
+        async function init() {
+            initMap();
+            await scrapeNews();
+            
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                renderArticleList();
+            }, 500);
+        }
+
+        init();
     </script>
 </body>
 </html>
