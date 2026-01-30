@@ -30,7 +30,6 @@
             flex-direction: column;
         }
 
-        /* Header */
         .header {
             height: 60px;
             background: var(--bg);
@@ -79,6 +78,7 @@
         }
 
         .status-dot.online { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .status-dot.offline { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
         .status-dot.listening { background: var(--danger); box-shadow: 0 0 10px var(--danger); animation: pulse 0.5s infinite; }
         .status-dot.thinking { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; animation: pulse 1s infinite; }
 
@@ -108,7 +108,6 @@
 
         .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* Main Chat Area */
         .chat-container {
             flex: 1;
             display: flex;
@@ -129,7 +128,6 @@
         .messages::-webkit-scrollbar { width: 4px; }
         .messages::-webkit-scrollbar-thumb { background: var(--border); }
 
-        /* Welcome Screen */
         .welcome {
             flex: 1;
             display: flex;
@@ -183,7 +181,6 @@
             line-height: 1.8;
         }
 
-        /* Messages */
         .message {
             display: flex;
             gap: 15px;
@@ -256,7 +253,6 @@
             border-color: rgba(74, 222, 128, 0.3);
         }
 
-        /* Typing Indicator */
         .typing {
             display: none;
             align-items: center;
@@ -293,7 +289,6 @@
             letter-spacing: 2px;
         }
 
-        /* Input Area */
         .input-area {
             padding: 20px;
             background: var(--bg);
@@ -365,7 +360,6 @@
         .send-btn:hover { background: #22c55e; }
         .send-btn:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
 
-        /* Voice Visualization Overlay */
         .voice-overlay {
             position: fixed;
             top: 0;
@@ -437,7 +431,6 @@
 
         .voice-cancel:hover { border-color: var(--text); color: var(--text); }
 
-        /* Connection Error */
         .error-banner {
             display: none;
             padding: 15px 20px;
@@ -450,7 +443,6 @@
 
         .error-banner.show { display: block; }
 
-        /* Mobile Responsive */
         @media (max-width: 600px) {
             .header { padding: 0 15px; height: 50px; }
             .logo { font-size: 18px; letter-spacing: 3px; }
@@ -467,7 +459,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="logo-section">
             <div class="logo">ATLAS</div>
@@ -482,15 +473,12 @@
         </div>
     </header>
 
-    <!-- Error Banner -->
     <div class="error-banner" id="errorBanner">
         Verbindung zum Server fehlgeschlagen. Versuche erneut...
     </div>
 
-    <!-- Chat Container -->
     <div class="chat-container">
         <div class="messages" id="messages">
-            <!-- Welcome Screen -->
             <div class="welcome" id="welcome">
                 <div class="welcome-logo">ATLAS</div>
                 <div class="welcome-sub">ADVANCED TACTICAL LIBRARY & ASSISTANT SYSTEM</div>
@@ -506,7 +494,6 @@
             </div>
         </div>
 
-        <!-- Typing Indicator -->
         <div class="typing" id="typing">
             <div class="typing-dots">
                 <div class="typing-dot"></div>
@@ -517,26 +504,14 @@
         </div>
     </div>
 
-    <!-- Input Area -->
     <div class="input-area">
         <div class="input-container">
-            <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="Sprachsteuerung">
-                🎤
-            </button>
-            <input 
-                type="text" 
-                class="text-input" 
-                id="textInput" 
-                placeholder="Schreibe eine Nachricht..."
-                onkeypress="handleKeyPress(event)"
-            >
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-                SENDEN
-            </button>
+            <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="Sprachsteuerung">🎤</button>
+            <input type="text" class="text-input" id="textInput" placeholder="Schreibe eine Nachricht..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">SENDEN</button>
         </div>
     </div>
 
-    <!-- Voice Overlay -->
     <div class="voice-overlay" id="voiceOverlay">
         <div class="voice-visual">
             <div class="voice-bar"></div>
@@ -552,10 +527,10 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // CONFIGURATION
+        // CONFIGURATION - CORRECT SERVER URL
         // ═══════════════════════════════════════════════════════════════
         
-        const ATLAS_SERVER = 'https://atlas-production-b881.up.railway.app';
+        const ATLAS_SERVER = 'https://server-production-7ba8.up.railway.app';
         
         // ═══════════════════════════════════════════════════════════════
         // STATE
@@ -565,11 +540,6 @@
         let isListening = false;
         let recognition = null;
         let synthesis = window.speechSynthesis;
-        let currentUtterance = null;
-        
-        // ═══════════════════════════════════════════════════════════════
-        // ELEMENTS
-        // ═══════════════════════════════════════════════════════════════
         
         const elements = {
             messages: document.getElementById('messages'),
@@ -585,30 +555,16 @@
             errorBanner: document.getElementById('errorBanner')
         };
 
-        // ═══════════════════════════════════════════════════════════════
-        // INITIALIZATION
-        // ═══════════════════════════════════════════════════════════════
-        
         async function init() {
-            // Check server connection
             await checkConnection();
-            
-            // Setup speech recognition
             setupSpeechRecognition();
-            
-            // Focus input
             elements.textInput.focus();
         }
 
         async function checkConnection() {
             try {
-                const response = await fetch(`${ATLAS_SERVER}/health`, {
-                    method: 'GET',
-                    timeout: 5000
-                });
-                
+                const response = await fetch(`${ATLAS_SERVER}/health`);
                 if (response.ok) {
-                    const data = await response.json();
                     setStatus('online', 'ONLINE');
                     isConnected = true;
                     elements.errorBanner.classList.remove('show');
@@ -620,8 +576,6 @@
                 setStatus('offline', 'OFFLINE');
                 isConnected = false;
                 elements.errorBanner.classList.add('show');
-                
-                // Retry in 5 seconds
                 setTimeout(checkConnection, 5000);
             }
         }
@@ -631,15 +585,9 @@
             elements.statusText.textContent = text;
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // SPEECH RECOGNITION
-        // ═══════════════════════════════════════════════════════════════
-        
         function setupSpeechRecognition() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                console.log('Speech recognition not supported');
                 elements.voiceBtn.style.opacity = '0.3';
-                elements.voiceBtn.title = 'Spracherkennung nicht unterstützt';
                 return;
             }
 
@@ -658,12 +606,8 @@
             };
 
             recognition.onresult = (event) => {
-                const transcript = Array.from(event.results)
-                    .map(result => result[0].transcript)
-                    .join('');
-                
+                const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
                 elements.voiceTranscript.textContent = transcript;
-
                 if (event.results[0].isFinal) {
                     stopListening();
                     if (transcript.trim()) {
@@ -673,51 +617,22 @@
                 }
             };
 
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                stopListening();
-            };
-
-            recognition.onend = () => {
-                stopListening();
-            };
+            recognition.onerror = () => stopListening();
+            recognition.onend = () => stopListening();
         }
 
         function toggleVoice() {
-            if (!recognition) {
-                alert('Spracherkennung wird in diesem Browser nicht unterstützt.');
-                return;
-            }
-
-            if (isListening) {
-                stopListening();
-            } else {
-                startListening();
-            }
-        }
-
-        function startListening() {
-            // Stop any playing speech
-            if (synthesis.speaking) {
-                synthesis.cancel();
-            }
-            
-            try {
-                recognition.start();
-            } catch (e) {
-                console.error('Could not start recognition:', e);
-            }
+            if (!recognition) return alert('Spracherkennung nicht unterstützt.');
+            if (isListening) stopListening();
+            else { if (synthesis.speaking) synthesis.cancel(); try { recognition.start(); } catch(e){} }
         }
 
         function stopListening() {
             isListening = false;
             elements.voiceBtn.classList.remove('listening');
             elements.voiceOverlay.classList.remove('show');
-            setStatus('online', 'ONLINE');
-            
-            try {
-                recognition.stop();
-            } catch (e) {}
+            if (isConnected) setStatus('online', 'ONLINE');
+            try { recognition.stop(); } catch(e){}
         }
 
         function cancelVoice() {
@@ -725,43 +640,19 @@
             elements.voiceTranscript.textContent = '';
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // TEXT-TO-SPEECH
-        // ═══════════════════════════════════════════════════════════════
-        
         function speak(text) {
             if (!synthesis) return;
-            
-            // Cancel any ongoing speech
             synthesis.cancel();
-            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'de-DE';
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            
-            // Try to find a German voice
             const voices = synthesis.getVoices();
             const germanVoice = voices.find(v => v.lang.startsWith('de'));
-            if (germanVoice) {
-                utterance.voice = germanVoice;
-            }
-            
-            currentUtterance = utterance;
+            if (germanVoice) utterance.voice = germanVoice;
             synthesis.speak(utterance);
         }
 
-        // Load voices
-        if (synthesis) {
-            synthesis.onvoiceschanged = () => {
-                synthesis.getVoices();
-            };
-        }
+        if (synthesis) synthesis.onvoiceschanged = () => synthesis.getVoices();
 
-        // ═══════════════════════════════════════════════════════════════
-        // MESSAGING
-        // ═══════════════════════════════════════════════════════════════
-        
         function handleKeyPress(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -773,16 +664,9 @@
             const text = elements.textInput.value.trim();
             if (!text) return;
             
-            // Clear input
             elements.textInput.value = '';
-            
-            // Hide welcome
             elements.welcome.style.display = 'none';
-            
-            // Add user message
             addMessage('user', text);
-            
-            // Show typing
             elements.typing.classList.add('show');
             setStatus('thinking', 'DENKT...');
             scrollToBottom();
@@ -790,18 +674,11 @@
             try {
                 const response = await fetch(`${ATLAS_SERVER}/api/message`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        userId: 'web-client'
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, userId: 'web-client' })
                 });
                 
                 const data = await response.json();
-                
-                // Hide typing
                 elements.typing.classList.remove('show');
                 setStatus('online', 'ONLINE');
                 
@@ -811,55 +688,38 @@
                 } else {
                     addMessage('atlas', data.error || 'Entschuldigung, es gab einen Fehler.');
                 }
-                
             } catch (error) {
                 console.error('Send error:', error);
                 elements.typing.classList.remove('show');
                 setStatus('online', 'ONLINE');
                 addMessage('atlas', 'Verbindungsfehler. Bitte versuche es erneut.');
             }
-            
             scrollToBottom();
         }
 
         function addMessage(sender, text) {
-            const now = new Date();
-            const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            
-            const messageEl = document.createElement('div');
-            messageEl.className = `message ${sender}`;
-            
-            messageEl.innerHTML = `
+            const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const msg = document.createElement('div');
+            msg.className = `message ${sender}`;
+            msg.innerHTML = `
                 <div class="message-avatar">${sender === 'user' ? '👤' : '🤖'}</div>
                 <div class="message-content">
                     <div class="message-header">
                         <span class="message-sender">${sender === 'user' ? 'DU' : 'ATLAS'}</span>
                         <span>${time}</span>
                     </div>
-                    <div class="message-bubble">${formatMessage(text)}</div>
+                    <div class="message-bubble">${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
                 </div>
             `;
-            
-            elements.messages.appendChild(messageEl);
-        }
-
-        function formatMessage(text) {
-            // Convert line breaks
-            return text
-                .replace(/\n/g, '<br>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            elements.messages.appendChild(msg);
         }
 
         function scrollToBottom() {
-            setTimeout(() => {
-                elements.messages.scrollTop = elements.messages.scrollHeight;
-            }, 100);
+            setTimeout(() => { elements.messages.scrollTop = elements.messages.scrollHeight; }, 100);
         }
 
         function clearChat() {
-            // Keep welcome, remove messages
-            const messages = elements.messages.querySelectorAll('.message');
-            messages.forEach(m => m.remove());
+            elements.messages.querySelectorAll('.message').forEach(m => m.remove());
             elements.welcome.style.display = 'flex';
         }
 
@@ -867,10 +727,6 @@
             alert('Einstellungen kommen bald!');
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // INIT
-        // ═══════════════════════════════════════════════════════════════
-        
         init();
     </script>
 </body>
