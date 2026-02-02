@@ -16,7 +16,7 @@ import { atlasSkills } from './skills.js';
 class AtlasBrain {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
-        this.model = 'gemini-2.0-flash';
+        this.model = 'gemini-pro';
         this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
         
         // ATLAS Persönlichkeit
