@@ -4,24 +4,20 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * 
  * Verantwortlich für:
- * - Claude API Integration
+ * - Gemini API Integration (KOSTENLOS!)
  * - ATLAS Persönlichkeit
  * - Kontext-Management
  * - Skill-Routing
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import { atlasMemory } from './memory.js';
 import { atlasSkills } from './skills.js';
 
 class AtlasBrain {
     constructor() {
-        this.client = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY
-        });
-        
-        this.model = 'claude-sonnet-4-20250514';
-        this.maxTokens = 1024;
+        this.apiKey = process.env.GEMINI_API_KEY;
+        this.model = 'gemini-2.0-flash';
+        this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
         
         // ATLAS Persönlichkeit
         this.systemPrompt = `Du bist ATLAS (Advanced Tactical Library & Assistant System), ein hochentwickelter KI-Assistent, inspiriert von JARVIS und FRIDAY aus Iron Man.
@@ -59,7 +55,7 @@ WICHTIG:
 - Bei komplexen Themen strukturiere die Antwort klar
 - Wenn du Daten von Skills bekommst, präsentiere sie übersichtlich`;
 
-        console.log('[ATLAS BRAIN] Initialisiert');
+        console.log('[ATLAS BRAIN] Initialisiert mit Gemini API');
     }
 
     /**
@@ -81,31 +77,17 @@ WICHTIG:
                 enrichedMessage = `${message}\n\n[SKILL-DATEN]:\n${JSON.stringify(skillResult, null, 2)}`;
             }
 
-            // 4. Claude API aufrufen
-            const response = await this.client.messages.create({
-                model: this.model,
-                max_tokens: this.maxTokens,
-                system: this.systemPrompt,
-                messages: [
-                    ...conversationHistory,
-                    { role: 'user', content: enrichedMessage }
-                ]
-            });
-
-            const assistantMessage = response.content[0].text;
+            // 4. Gemini API aufrufen
+            const response = await this.callGemini(enrichedMessage, conversationHistory);
 
             // 5. In Memory speichern
             atlasMemory.addMessage(userId, 'user', message);
-            atlasMemory.addMessage(userId, 'assistant', assistantMessage);
+            atlasMemory.addMessage(userId, 'assistant', response);
 
             return {
                 success: true,
-                message: assistantMessage,
-                skillData: skillResult,
-                usage: {
-                    inputTokens: response.usage.input_tokens,
-                    outputTokens: response.usage.output_tokens
-                }
+                message: response,
+                skillData: skillResult
             };
 
         } catch (error) {
@@ -115,6 +97,67 @@ WICHTIG:
                 message: 'Entschuldigung, es gab einen Fehler bei der Verarbeitung. Bitte versuche es erneut.',
                 error: error.message
             };
+        }
+    }
+
+    /**
+     * Ruft die Gemini API auf
+     */
+    async callGemini(message, history = []) {
+        const contents = [];
+        
+        // System prompt als erste Nachricht
+        contents.push({
+            role: 'user',
+            parts: [{ text: this.systemPrompt + '\n\nVerstanden? Antworte nur mit "Ja, ich bin ATLAS."' }]
+        });
+        contents.push({
+            role: 'model',
+            parts: [{ text: 'Ja, ich bin ATLAS.' }]
+        });
+
+        // Vorherige Nachrichten hinzufügen
+        for (const msg of history) {
+            contents.push({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.content }]
+            });
+        }
+
+        // Aktuelle Nachricht
+        contents.push({
+            role: 'user',
+            parts: [{ text: message }]
+        });
+
+        const requestBody = {
+            contents: contents,
+            generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024,
+            }
+        };
+
+        const response = await fetch(this.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('[ATLAS BRAIN] Gemini API Fehler:', error);
+            throw new Error(`Gemini API Fehler: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            throw new Error('Ungültige Antwort von Gemini');
         }
     }
 
@@ -191,7 +234,7 @@ WICHTIG:
     }
 
     /**
-     * Schnelle Antwort ohne Claude (für einfache Anfragen)
+     * Schnelle Antwort ohne API (für einfache Anfragen)
      */
     quickResponse(type, data) {
         const responses = {
