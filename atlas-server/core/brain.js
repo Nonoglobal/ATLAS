@@ -16,8 +16,8 @@ import { atlasSkills } from './skills.js';
 class AtlasBrain {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
-        this.model = 'gemini-pro';
-        this.apiUrl = `https://generativelanguage.googleapis.com/v1/models/${this.model}:generateContent?key=${this.apiKey}`;
+        this.model = 'gemini-2.0-flash';
+        this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
         
         // ATLAS Persönlichkeit
         this.systemPrompt = `Du bist ATLAS (Advanced Tactical Library & Assistant System), ein hochentwickelter KI-Assistent, inspiriert von JARVIS und FRIDAY aus Iron Man.
