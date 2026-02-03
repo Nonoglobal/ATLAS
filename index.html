@@ -534,6 +534,83 @@
         }
 
         /* ═══════════════════════════════════════════
+           TEXT INPUT (Hidden)
+        ═══════════════════════════════════════════ */
+        .text-input-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid var(--gray-800);
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .text-input-btn:hover {
+            border-color: var(--gray-500);
+            color: var(--white);
+        }
+
+        .text-input-container {
+            position: fixed;
+            bottom: 90px;
+            right: 30px;
+            width: 300px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .text-input-container.visible {
+            display: flex;
+        }
+
+        .text-input {
+            padding: 12px 15px;
+            background: var(--gray-900);
+            border: 1px solid var(--gray-700);
+            color: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            border-radius: 4px;
+        }
+
+        .text-input:focus {
+            border-color: var(--gray-500);
+        }
+
+        .text-input::placeholder {
+            color: var(--gray-600);
+        }
+
+        .text-send-btn {
+            padding: 10px;
+            background: var(--white);
+            border: none;
+            color: var(--black);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .text-send-btn:hover {
+            background: var(--gray-200);
+        }
+
+        /* ═══════════════════════════════════════════
            RESPONSIVE
         ═══════════════════════════════════════════ */
         @media (max-width: 600px) {
@@ -565,6 +642,12 @@
             .response {
                 font-size: 16px;
                 padding: 0 20px;
+            }
+
+            .text-input-container {
+                width: calc(100% - 60px);
+                right: 30px;
+                left: 30px;
             }
         }
     </style>
@@ -639,6 +722,19 @@
         </div>
     </div>
 
+    <!-- Text Input Button -->
+    <button class="text-input-btn" onclick="toggleTextInput()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+        </svg>
+    </button>
+
+    <!-- Text Input Container -->
+    <div class="text-input-container" id="textInputContainer">
+        <input type="text" class="text-input" id="textInput" placeholder="Nachricht..." onkeypress="if(event.key==='Enter')sendTextMessage()">
+        <button class="text-send-btn" onclick="sendTextMessage()">SENDEN</button>
+    </div>
+
     <script>
         // ═══════════════════════════════════════════════════════════════
         // CONFIGURATION
@@ -647,7 +743,7 @@
         const CONFIG = {
             SERVER_URL: 'https://server-production-7ba8.up.railway.app',
             WAKE_WORDS: ['friday', 'freitag', 'frei day', 'fry day', 'fraidy', 'fryday', 'hey friday', 'ok friday', 'hi friday'],
-            SILENCE_TIMEOUT: 1000,  // 1 second wait after speech
+            SILENCE_TIMEOUT: 1000,
             INTERRUPT_ENABLED: true
         };
 
@@ -690,22 +786,18 @@
         // ═══════════════════════════════════════════════════════════════
         
         async function init() {
-            // Hide intro after animation
             setTimeout(() => {
                 el.introScreen.style.display = 'none';
             }, 3500);
 
-            // Check server connection
             await checkConnection();
 
-            // Check if we already have mic permission
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => track.stop());
                 el.permissionOverlay.classList.add('hidden');
                 startAlwaysListening();
             } catch (e) {
-                // Need permission
                 el.permissionOverlay.classList.remove('hidden');
             }
         }
@@ -772,7 +864,6 @@
 
                 const currentText = (finalTranscript || interimTranscript).toLowerCase().trim();
 
-                // Check for wake word
                 if (!state.isActivated && !state.isProcessing) {
                     if (containsWakeWord(currentText)) {
                         activateFriday(currentText);
@@ -780,9 +871,7 @@
                     }
                 }
 
-                // If activated, collect speech
                 if (state.isActivated) {
-                    // Check for interruption while speaking
                     if (state.isSpeaking && currentText.length > 0) {
                         handleInterruption(currentText);
                         return;
@@ -791,11 +880,9 @@
                     state.currentTranscript = finalTranscript || interimTranscript;
                     showTranscript(state.currentTranscript, !finalTranscript);
 
-                    // Reset silence timer
                     clearTimeout(state.silenceTimer);
                     
                     if (finalTranscript) {
-                        // Wait 1 second after final speech
                         state.silenceTimer = setTimeout(() => {
                             if (state.currentTranscript.trim()) {
                                 processCommand(state.currentTranscript);
@@ -814,7 +901,6 @@
 
             state.recognition.onend = () => {
                 state.isListening = false;
-                // Always restart
                 setTimeout(restartListening, 100);
             };
 
@@ -855,7 +941,6 @@
             setMode('activated');
             triggerFlash();
             
-            // Get command after wake word
             const command = removeWakeWord(text);
             if (command.length > 2) {
                 state.currentTranscript = command;
@@ -873,14 +958,11 @@
         function handleInterruption(newText) {
             if (!CONFIG.INTERRUPT_ENABLED) return;
             
-            // Stop speaking
             state.synthesis.cancel();
             state.isSpeaking = false;
             
-            // Store what Friday was saying
             state.interruptedText = el.response.textContent;
             
-            // Process new input with context
             state.currentTranscript = newText;
             showTranscript(newText, false);
             
@@ -903,7 +985,6 @@
             try {
                 let messageText = text;
                 
-                // Add interruption context
                 if (wasInterrupted && state.interruptedText) {
                     messageText = `[KONTEXT: Du wurdest unterbrochen. Du hast gerade gesagt: "${state.interruptedText}"]\n\nNeue Eingabe vom Nutzer: ${text}`;
                 }
@@ -950,7 +1031,6 @@
             utterance.rate = 1.0;
             utterance.pitch = 1.1;
             
-            // Find a good voice
             const voices = state.synthesis.getVoices();
             const germanVoice = voices.find(v => v.lang.startsWith('de') && v.name.includes('Female')) ||
                                voices.find(v => v.lang.startsWith('de'));
@@ -965,7 +1045,6 @@
 
             utterance.onend = () => {
                 state.isSpeaking = false;
-                // Go back to activated mode briefly, then standby
                 setMode('activated');
                 setTimeout(() => {
                     if (!state.isSpeaking && !state.isProcessing) {
@@ -978,7 +1057,6 @@
             state.synthesis.speak(utterance);
         }
 
-        // Load voices
         if (state.synthesis) {
             state.synthesis.onvoiceschanged = () => state.synthesis.getVoices();
         }
@@ -988,7 +1066,6 @@
         // ═══════════════════════════════════════════════════════════════
         
         function setMode(mode) {
-            // Reset classes
             el.voiceOrb.className = 'voice-orb';
             el.statusDot.className = 'status-dot';
             el.statusText.className = 'status-text';
@@ -1001,6 +1078,7 @@
                     el.statusDot.classList.add('standby');
                     el.statusText.textContent = 'STANDBY';
                     el.wakeIndicator.classList.add('visible');
+                    el.wakeIndicator.textContent = 'Say "Friday"';
                     break;
                     
                 case 'activated':
@@ -1046,6 +1124,31 @@
         function triggerFlash() {
             el.flash.classList.add('active');
             setTimeout(() => el.flash.classList.remove('active'), 200);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TEXT INPUT
+        // ═══════════════════════════════════════════════════════════════
+
+        function toggleTextInput() {
+            const container = document.getElementById('textInputContainer');
+            container.classList.toggle('visible');
+            if (container.classList.contains('visible')) {
+                document.getElementById('textInput').focus();
+            }
+        }
+
+        function sendTextMessage() {
+            const input = document.getElementById('textInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            input.value = '';
+            document.getElementById('textInputContainer').classList.remove('visible');
+            
+            state.isActivated = true;
+            showTranscript(text, false);
+            processCommand(text);
         }
 
         // ═══════════════════════════════════════════════════════════════
