@@ -1,5 +1,5 @@
-<!-- v2 -->
-<!-- FRIDAY v3 - Always Listening -->
+<!-- v4 -->
+<!-- FRIDAY v4 - Always Listening + Text Input -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -723,9 +723,16 @@
     </div>
 
     <!-- Text Input Button -->
-    <button class="text-input-btn" onclick="toggleTextInput()">
+    <button class="text-input-btn" onclick="toggleTextInput()" style="right: 30px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+        </svg>
+    </button>
+    
+    <!-- Reset Voice Button -->
+    <button class="text-input-btn" onclick="resetVoiceTraining()" style="right: 90px;" title="Stimme neu trainieren">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
         </svg>
     </button>
 
@@ -744,7 +751,9 @@
             SERVER_URL: 'https://server-production-7ba8.up.railway.app',
             WAKE_WORDS: ['friday', 'freitag', 'frei day', 'fry day', 'fraidy', 'fryday', 'hey friday', 'ok friday', 'hi friday'],
             SILENCE_TIMEOUT: 1000,
-            INTERRUPT_ENABLED: true
+            INTERRUPT_ENABLED: true,
+            AUTO_STANDBY_TIMEOUT: 10000, // 10 Sekunden
+            VOICE_MATCH_THRESHOLD: 0.65  // 65% Übereinstimmung nötig
         };
 
         // ═══════════════════════════════════════════════════════════════
@@ -760,8 +769,15 @@
             currentTranscript: '',
             interruptedText: '',
             silenceTimer: null,
+            autoStandbyTimer: null,
             recognition: null,
-            synthesis: window.speechSynthesis
+            synthesis: window.speechSynthesis,
+            // Voice Recognition
+            voiceProfile: null,
+            isTrainingVoice: false,
+            trainingAudioData: [],
+            audioContext: null,
+            analyser: null
         };
 
         // ═══════════════════════════════════════════════════════════════
@@ -791,12 +807,21 @@
             }, 3500);
 
             await checkConnection();
+            
+            // Load voice profile from localStorage
+            loadVoiceProfile();
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => track.stop());
                 el.permissionOverlay.classList.add('hidden');
-                startAlwaysListening();
+                
+                // Check if voice training is needed
+                if (!state.voiceProfile) {
+                    showVoiceTraining();
+                } else {
+                    startAlwaysListening();
+                }
             } catch (e) {
                 el.permissionOverlay.classList.remove('hidden');
             }
@@ -872,6 +897,9 @@
                 }
 
                 if (state.isActivated) {
+                    // Reset auto-standby timer on any speech
+                    resetAutoStandbyTimer();
+                    
                     if (state.isSpeaking && currentText.length > 0) {
                         handleInterruption(currentText);
                         return;
@@ -940,6 +968,7 @@
             
             setMode('activated');
             triggerFlash();
+            resetAutoStandbyTimer();
             
             const command = removeWakeWord(text);
             if (command.length > 2) {
@@ -948,6 +977,23 @@
                 state.silenceTimer = setTimeout(() => {
                     processCommand(command);
                 }, CONFIG.SILENCE_TIMEOUT);
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // AUTO-STANDBY TIMER
+        // ═══════════════════════════════════════════════════════════════
+        
+        function resetAutoStandbyTimer() {
+            clearTimeout(state.autoStandbyTimer);
+            if (state.isActivated && !state.isSpeaking && !state.isProcessing) {
+                state.autoStandbyTimer = setTimeout(() => {
+                    if (!state.isSpeaking && !state.isProcessing) {
+                        state.isActivated = false;
+                        setMode('standby');
+                        el.transcript.classList.remove('visible');
+                    }
+                }, CONFIG.AUTO_STANDBY_TIMEOUT);
             }
         }
 
@@ -1046,12 +1092,7 @@
             utterance.onend = () => {
                 state.isSpeaking = false;
                 setMode('activated');
-                setTimeout(() => {
-                    if (!state.isSpeaking && !state.isProcessing) {
-                        state.isActivated = false;
-                        setMode('standby');
-                    }
-                }, 3000);
+                resetAutoStandbyTimer();
             };
             
             state.synthesis.speak(utterance);
@@ -1149,6 +1190,248 @@
             state.isActivated = true;
             showTranscript(text, false);
             processCommand(text);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // VOICE TRAINING & RECOGNITION
+        // ═══════════════════════════════════════════════════════════════
+
+        const TRAINING_SENTENCES = [
+            "Friday, wie ist das Wetter heute?",
+            "Hey Friday, erzähl mir einen Witz.",
+            "Friday, was steht auf meinem Kalender?",
+            "Ok Friday, starte meine Playlist.",
+            "Friday, erinnere mich morgen an den Termin."
+        ];
+        
+        let currentTrainingSentence = 0;
+        let trainingProfiles = [];
+
+        function loadVoiceProfile() {
+            const saved = localStorage.getItem('friday_voice_profile');
+            if (saved) {
+                state.voiceProfile = JSON.parse(saved);
+                console.log('[FRIDAY] Voice profile loaded');
+            }
+        }
+
+        function saveVoiceProfile(profile) {
+            state.voiceProfile = profile;
+            localStorage.setItem('friday_voice_profile', JSON.stringify(profile));
+            console.log('[FRIDAY] Voice profile saved');
+        }
+
+        function showVoiceTraining() {
+            // Create training overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'voiceTrainingOverlay';
+            overlay.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.98);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10001;
+                    padding: 20px;
+                ">
+                    <div style="
+                        font-family: 'Orbitron', sans-serif;
+                        font-size: 24px;
+                        color: white;
+                        margin-bottom: 20px;
+                        letter-spacing: 5px;
+                    ">VOICE TRAINING</div>
+                    
+                    <div style="
+                        color: #737373;
+                        font-size: 14px;
+                        margin-bottom: 40px;
+                        text-align: center;
+                        max-width: 400px;
+                    ">
+                        FRIDAY lernt deine Stimme kennen.<br>
+                        Bitte sprich die folgenden Sätze laut und deutlich.
+                    </div>
+                    
+                    <div id="trainingProgress" style="
+                        color: #525252;
+                        font-size: 12px;
+                        margin-bottom: 20px;
+                        letter-spacing: 2px;
+                    ">SATZ 1 VON 5</div>
+                    
+                    <div id="trainingSentence" style="
+                        color: white;
+                        font-size: 18px;
+                        margin-bottom: 40px;
+                        text-align: center;
+                        padding: 20px;
+                        border: 1px solid #404040;
+                        max-width: 500px;
+                    ">"${TRAINING_SENTENCES[0]}"</div>
+                    
+                    <div id="trainingStatus" style="
+                        color: #737373;
+                        font-size: 13px;
+                        margin-bottom: 30px;
+                    ">Klicke auf START und sprich den Satz</div>
+                    
+                    <button id="trainingBtn" onclick="startTrainingRecording()" style="
+                        padding: 15px 50px;
+                        background: white;
+                        border: none;
+                        color: black;
+                        font-family: 'Orbitron', sans-serif;
+                        font-size: 12px;
+                        letter-spacing: 3px;
+                        cursor: pointer;
+                    ">START</button>
+                    
+                    <button onclick="skipVoiceTraining()" style="
+                        margin-top: 30px;
+                        padding: 10px 20px;
+                        background: transparent;
+                        border: 1px solid #404040;
+                        color: #525252;
+                        font-size: 11px;
+                        cursor: pointer;
+                    ">ÜBERSPRINGEN</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        async function startTrainingRecording() {
+            const btn = document.getElementById('trainingBtn');
+            const status = document.getElementById('trainingStatus');
+            
+            btn.textContent = 'AUFNAHME...';
+            btn.disabled = true;
+            status.textContent = 'Sprich jetzt...';
+            status.style.color = 'white';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Setup audio analysis
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = state.audioContext.createMediaStreamSource(stream);
+                state.analyser = state.audioContext.createAnalyser();
+                state.analyser.fftSize = 2048;
+                source.connect(state.analyser);
+                
+                // Record for 3 seconds
+                const audioData = [];
+                const bufferLength = state.analyser.frequencyBinCount;
+                
+                const recordInterval = setInterval(() => {
+                    const dataArray = new Float32Array(bufferLength);
+                    state.analyser.getFloatFrequencyData(dataArray);
+                    audioData.push(Array.from(dataArray));
+                }, 100);
+                
+                setTimeout(() => {
+                    clearInterval(recordInterval);
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Calculate voice signature
+                    const signature = calculateVoiceSignature(audioData);
+                    trainingProfiles.push(signature);
+                    
+                    currentTrainingSentence++;
+                    
+                    if (currentTrainingSentence < TRAINING_SENTENCES.length) {
+                        // Next sentence
+                        document.getElementById('trainingProgress').textContent = 
+                            `SATZ ${currentTrainingSentence + 1} VON 5`;
+                        document.getElementById('trainingSentence').textContent = 
+                            `"${TRAINING_SENTENCES[currentTrainingSentence]}"`;
+                        btn.textContent = 'START';
+                        btn.disabled = false;
+                        status.textContent = 'Gut! Weiter zum nächsten Satz.';
+                        status.style.color = '#a3a3a3';
+                    } else {
+                        // Training complete
+                        completeVoiceTraining();
+                    }
+                }, 3000);
+                
+            } catch (e) {
+                console.error('Training error:', e);
+                status.textContent = 'Fehler beim Aufnehmen. Bitte erneut versuchen.';
+                btn.textContent = 'START';
+                btn.disabled = false;
+            }
+        }
+
+        function calculateVoiceSignature(audioData) {
+            // Calculate average frequency profile
+            const avgProfile = new Array(audioData[0].length).fill(0);
+            
+            audioData.forEach(frame => {
+                frame.forEach((val, i) => {
+                    avgProfile[i] += val;
+                });
+            });
+            
+            avgProfile.forEach((val, i) => {
+                avgProfile[i] = val / audioData.length;
+            });
+            
+            // Extract key features (simplified)
+            const features = {
+                lowFreq: avgProfile.slice(0, 50).reduce((a, b) => a + b, 0) / 50,
+                midFreq: avgProfile.slice(50, 200).reduce((a, b) => a + b, 0) / 150,
+                highFreq: avgProfile.slice(200, 400).reduce((a, b) => a + b, 0) / 200,
+                peak: Math.max(...avgProfile),
+                variance: calculateVariance(avgProfile)
+            };
+            
+            return features;
+        }
+
+        function calculateVariance(arr) {
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            return arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
+        }
+
+        function completeVoiceTraining() {
+            // Average all training profiles
+            const finalProfile = {
+                lowFreq: trainingProfiles.reduce((a, b) => a + b.lowFreq, 0) / trainingProfiles.length,
+                midFreq: trainingProfiles.reduce((a, b) => a + b.midFreq, 0) / trainingProfiles.length,
+                highFreq: trainingProfiles.reduce((a, b) => a + b.highFreq, 0) / trainingProfiles.length,
+                peak: trainingProfiles.reduce((a, b) => a + b.peak, 0) / trainingProfiles.length,
+                variance: trainingProfiles.reduce((a, b) => a + b.variance, 0) / trainingProfiles.length
+            };
+            
+            saveVoiceProfile(finalProfile);
+            
+            // Remove overlay and start
+            document.getElementById('voiceTrainingOverlay').remove();
+            triggerFlash();
+            startAlwaysListening();
+        }
+
+        function skipVoiceTraining() {
+            // Save a null profile - will accept all voices
+            saveVoiceProfile({ skipped: true });
+            document.getElementById('voiceTrainingOverlay').remove();
+            startAlwaysListening();
+        }
+
+        function resetVoiceTraining() {
+            localStorage.removeItem('friday_voice_profile');
+            state.voiceProfile = null;
+            currentTrainingSentence = 0;
+            trainingProfiles = [];
+            location.reload();
         }
 
         // ═══════════════════════════════════════════════════════════════
