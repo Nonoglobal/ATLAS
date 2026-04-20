@@ -3,172 +3,192 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>OPS CENTER</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&display=swap" rel="stylesheet">
+<title>I AM MORE</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:      #080808;
-  --bg2:     #111111;
-  --bg3:     #1a1a1a;
-  --bg4:     #222222;
-  --red:     #8B1A1A;
-  --red2:    #B82020;
-  --red3:    #D42222;
-  --glow:    rgba(139,26,26,0.55);
-  --glow2:   rgba(180,30,30,0.25);
-  --white:   #ffffff;
-  --gray:    #888888;
-  --gray2:   #444444;
-  --gray3:   #2a2a2a;
-  --fh:      'Orbitron', monospace;
-  --fb:      'Rajdhani', sans-serif;
+  --bg:    #080808;
+  --bg2:   #121212;
+  --bg3:   #1c1c1c;
+  --red:   #8B1A1A;
+  --red2:  #B82020;
+  --red3:  #D42222;
+  --glow:  rgba(180,30,30,0.5);
+  --glow2: rgba(180,30,30,0.15);
+  --white: #ffffff;
+  --gray:  #777777;
+  --gray2: #333333;
+  --fh:    'Orbitron', monospace;
+  --fb:    'Rajdhani', sans-serif;
 }
-
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
 
 body {
   background: var(--bg);
   color: var(--white);
   font-family: var(--fb);
-  min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── HEADER ──────────────────────────────── */
-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: linear-gradient(180deg, #101010 0%, #080808 100%);
-  border-bottom: 1px solid var(--red);
-  padding: 12px 16px;
+/* ── LOADER ───────────────────────────── */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 999;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 28px;
+  transition: opacity .6s ease;
 }
-.header-logo {
+#loader.fade { opacity: 0; pointer-events: none; }
+
+.loader-title {
   font-family: var(--fh);
-  font-size: 1rem;
+  font-size: clamp(1.4rem, 6vw, 2.2rem);
+  font-weight: 900;
   letter-spacing: .45em;
-  color: var(--red3);
-  text-shadow: 0 0 18px var(--glow);
+  color: var(--white);
+  text-shadow: 0 0 30px var(--glow);
 }
-.header-sub {
-  font-size: .6rem;
-  letter-spacing: .3em;
+.loader-bar-wrap {
+  width: min(260px, 70vw);
+  height: 2px;
+  background: var(--gray2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--red), var(--red3));
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--glow);
+  transition: width .4s ease;
+}
+.loader-status {
+  font-family: var(--fh);
+  font-size: .55rem;
+  letter-spacing: .35em;
   color: var(--gray);
   text-transform: uppercase;
 }
-.sync-indicator {
+
+/* ── APP ──────────────────────────────── */
+#app {
+  opacity: 0;
+  transition: opacity .5s ease;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 14px 40px;
+}
+#app.show { opacity: 1; }
+
+/* ── HEADER ───────────────────────────── */
+header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: .65rem;
-  letter-spacing: .12em;
-  color: var(--gray);
-  cursor: pointer;
-  padding: 6px 8px;
-  border: 1px solid var(--gray3);
-  border-radius: 3px;
-  transition: border-color .2s;
+  justify-content: space-between;
+  padding: 14px 0 10px;
+  border-bottom: 1px solid var(--red);
+  margin-bottom: 20px;
 }
-.sync-indicator:hover { border-color: var(--red); }
-.sync-dot {
+.app-title {
+  font-family: var(--fh);
+  font-size: clamp(.8rem, 3.5vw, 1rem);
+  font-weight: 900;
+  letter-spacing: .45em;
+  color: var(--red3);
+  text-shadow: 0 0 14px var(--glow);
+}
+.fb-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .6rem;
+  letter-spacing: .15em;
+  color: var(--gray);
+  font-family: var(--fh);
+}
+.fb-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--gray2);
-  flex-shrink: 0;
+  transition: background .3s, box-shadow .3s;
 }
-.sync-dot.online  { background: #2dca72; box-shadow: 0 0 6px #2dca72; }
-.sync-dot.syncing { background: #e8a020; box-shadow: 0 0 6px #e8a020; animation: blink 1s ease-in-out infinite; }
+.fb-dot.on { background: #2dca72; box-shadow: 0 0 6px #2dca72; }
 
-/* ── LAYOUT ──────────────────────────────── */
-main {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 0 14px;
-}
-
-/* ── CLOCK ───────────────────────────────── */
+/* ── CLOCK ────────────────────────────── */
 .clock-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0 10px;
+  margin-bottom: 24px;
 }
-.clock-wrap {
-  position: relative;
-  width: 270px; height: 270px;
-  filter: drop-shadow(0 0 18px var(--glow));
+.clock-svg-wrap {
+  width:  min(88vw, 380px);
+  height: min(88vw, 380px);
+  filter: drop-shadow(0 0 22px var(--glow));
 }
 .clock-svg { width: 100%; height: 100%; }
 
 .digital {
   font-family: var(--fh);
-  font-size: 2rem;
+  font-size: clamp(1.6rem, 7vw, 2.4rem);
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .1em;
   color: var(--white);
   text-align: center;
   margin-top: 10px;
-  text-shadow: 0 0 12px var(--glow);
+  text-shadow: 0 0 14px var(--glow);
 }
 .date-line {
   font-size: .72rem;
-  letter-spacing: .3em;
+  letter-spacing: .28em;
   color: var(--gray);
   text-align: center;
-  margin-top: 3px;
+  margin-top: 4px;
   text-transform: uppercase;
 }
 
-/* ── DIVIDER ─────────────────────────────── */
+/* ── DIVIDER ──────────────────────────── */
 .div {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--red), transparent);
-  margin: 14px 0;
+  margin: 16px 0;
 }
 
-/* ── SECTION TITLE ───────────────────────── */
-.sec-title {
-  font-family: var(--fh);
-  font-size: .58rem;
-  letter-spacing: .4em;
-  color: var(--red2);
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-/* ── ACTIVITIES ──────────────────────────── */
+/* ── ACTIVITY BUTTONS ─────────────────── */
 .act-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-bottom: 4px;
+  gap: 10px;
+  margin-bottom: 0;
 }
-
 .act-btn {
-  position: relative;
   background: var(--bg3);
   border: 1px solid var(--gray2);
   border-radius: 5px;
-  padding: 14px 10px 12px;
+  padding: 16px 10px 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  transition: background .15s, border-color .15s;
+  gap: 6px;
+  position: relative;
+  transition: background .15s, border-color .15s, box-shadow .15s;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 .act-btn:active { transform: scale(.97); }
-
 .act-btn.active {
   border-color: var(--red3);
-  background: rgba(139,26,26,.18);
-  box-shadow: 0 0 14px var(--glow2), inset 0 0 10px rgba(139,26,26,.08);
+  background: rgba(139,26,26,.2);
+  box-shadow: 0 0 18px var(--glow2);
 }
 .act-btn.active::after {
   content: '';
@@ -176,28 +196,25 @@ main {
   inset: -1px;
   border-radius: 5px;
   border: 1px solid var(--red3);
-  animation: pulse-ring 2.2s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
-@keyframes pulse-ring {
-  0%,100% { opacity:1; }
-  50%      { opacity:.25; }
-}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
 
 .act-led {
   position: absolute;
-  top: 7px; right: 9px;
+  top: 7px; right: 8px;
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: var(--gray3);
+  background: var(--gray2);
 }
 .act-btn.active .act-led {
   background: var(--red3);
   box-shadow: 0 0 5px var(--red3);
-  animation: blink 1.6s ease-in-out infinite;
+  animation: blink 1.5s ease-in-out infinite;
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-.act-icon { font-size: 1.7rem; line-height: 1; }
+.act-icon { font-size: 1.9rem; line-height: 1; }
 .act-name {
   font-family: var(--fh);
   font-size: .55rem;
@@ -206,82 +223,104 @@ main {
   text-transform: uppercase;
 }
 .act-btn.active .act-name { color: var(--white); }
-.act-timer {
+
+/* ── ACTIVE TIMERS ────────────────────── */
+#activeStrip {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+#activeStrip.show { display: flex; }
+
+.active-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(139,26,26,.12);
+  border: 1px solid var(--red);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+.active-ic { font-size: 1.1rem; }
+.active-name {
   font-family: var(--fh);
-  font-size: .7rem;
+  font-size: .6rem;
+  letter-spacing: .2em;
+  color: var(--white);
+  flex: 1;
+}
+.active-dur {
+  font-family: var(--fh);
+  font-size: .8rem;
   color: var(--red3);
-  letter-spacing: .04em;
-  min-height: 1rem;
+  letter-spacing: .05em;
 }
 
-/* ── LOG TRAY ────────────────────────────── */
-.log-tray {
+/* ── LOG ──────────────────────────────── */
+.log-wrap {
+  max-height: 320px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 7px;
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 2px;
 }
-.log-tray::-webkit-scrollbar { width: 3px; }
-.log-tray::-webkit-scrollbar-track { background: var(--bg2); }
-.log-tray::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
+.log-wrap::-webkit-scrollbar { width: 3px; }
+.log-wrap::-webkit-scrollbar-track { background: var(--bg2); }
+.log-wrap::-webkit-scrollbar-thumb { background: var(--red); border-radius: 2px; }
 
 .log-empty {
   text-align: center;
   color: var(--gray2);
   font-size: .8rem;
   letter-spacing: .2em;
-  padding: 22px;
-  border: 1px dashed var(--gray3);
+  padding: 20px;
+  border: 1px dashed var(--gray2);
   border-radius: 4px;
 }
-
 .log-card {
   background: var(--bg3);
-  border: 1px solid var(--gray3);
+  border: 1px solid var(--gray2);
   border-left: 3px solid var(--red);
   border-radius: 4px;
   padding: 9px 10px;
   display: flex;
   align-items: center;
-  gap: 9px;
-  animation: slideIn .25s ease;
-  cursor: default;
+  gap: 8px;
+  animation: slideIn .2s ease;
 }
-@keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:none} }
+@keyframes slideIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
 
-.log-ic { font-size: 1.3rem; flex-shrink:0; }
-.log-info { flex:1; min-width:0; }
-.log-name {
+.lc-icon { font-size: 1.2rem; flex-shrink:0; }
+.lc-info { flex:1; min-width:0; }
+.lc-name {
   font-family: var(--fh);
-  font-size: .6rem;
+  font-size: .58rem;
   letter-spacing: .18em;
   color: var(--white);
-  text-transform: uppercase;
 }
-.log-meta {
+.lc-meta {
   display: flex;
-  flex-wrap: wrap;
   gap: 6px;
+  flex-wrap: wrap;
   margin-top: 2px;
-  font-size: .78rem;
+  font-size: .76rem;
   color: var(--gray);
 }
-.log-dur { color: var(--red2); font-weight: 700; }
-.log-rate { font-size: 1.15rem; flex-shrink:0; }
-.log-arrow {
-  font-size: 1.1rem;
+.lc-dur { color: var(--red2); font-weight: 700; }
+.lc-emoji { font-size: 1.1rem; flex-shrink:0; }
+.lc-arrow {
   color: var(--red2);
   opacity: .7;
   cursor: pointer;
   flex-shrink:0;
-  transition: opacity .2s;
+  font-size: 1.1rem;
   padding: 4px;
+  transition: opacity .2s;
 }
-.log-arrow:hover { opacity:1; }
+.lc-arrow:hover { opacity:1; }
 
-/* ── RATING MODAL ────────────────────────── */
+/* ── MODALS ───────────────────────────── */
 .overlay {
   display: none;
   position: fixed;
@@ -292,7 +331,7 @@ main {
   justify-content: center;
   padding: 16px;
 }
-.overlay.show { display:flex; }
+.overlay.show { display: flex; }
 
 .modal {
   background: var(--bg2);
@@ -303,16 +342,16 @@ main {
   max-width: 360px;
   box-shadow: 0 0 40px var(--glow);
 }
-.m-sub   { font-family:var(--fh); font-size:.6rem; letter-spacing:.3em; color:var(--gray); text-transform:uppercase; margin-bottom:3px; }
-.m-act   { font-family:var(--fh); font-size:1.15rem; letter-spacing:.1em; color:var(--red3); margin-bottom:4px; }
-.m-dur   { font-size:.85rem; color:var(--gray); margin-bottom:18px; }
-.m-lbl   { font-family:var(--fh); font-size:.58rem; letter-spacing:.3em; color:var(--gray); text-transform:uppercase; margin-bottom:9px; }
+.m-sub  { font-family:var(--fh); font-size:.58rem; letter-spacing:.3em; color:var(--gray); text-transform:uppercase; margin-bottom:3px; }
+.m-act  { font-family:var(--fh); font-size:1.1rem; letter-spacing:.1em; color:var(--red3); margin-bottom:4px; }
+.m-dur  { font-size:.82rem; color:var(--gray); margin-bottom:18px; }
+.m-lbl  { font-family:var(--fh); font-size:.55rem; letter-spacing:.3em; color:var(--gray); text-transform:uppercase; margin-bottom:9px; }
 
 .rate-grid {
   display: grid;
   grid-template-columns: repeat(5,1fr);
   gap: 6px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .rate-btn {
   display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -327,213 +366,113 @@ main {
 .rate-btn:hover, .rate-btn.sel {
   border-color: var(--red3);
   background: rgba(139,26,26,.25);
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
-.rate-emoji { font-size:1.3rem; line-height:1; }
-.rate-num   { font-family:var(--fh); font-size:.5rem; color:var(--gray); }
+.r-emoji { font-size: 1.3rem; line-height:1; }
+.r-num   { font-family:var(--fh); font-size:.48rem; color:var(--gray); }
 
 .m-btn {
-  width: 100%;
+  width:100%;
   background: var(--red);
   color: var(--white);
   border: none;
   border-radius: 4px;
   padding: 11px;
   font-family: var(--fh);
-  font-size: .65rem;
+  font-size: .62rem;
   letter-spacing: .3em;
   text-transform: uppercase;
   cursor: pointer;
   transition: background .2s;
 }
 .m-btn:hover { background: var(--red3); }
-.m-btn.sec   { background: var(--bg4); flex:.45; }
+.m-btn.sec   { background: var(--bg3); }
 .m-row       { display:flex; gap:8px; }
 
-/* ── SYNC PANEL ──────────────────────────── */
-.sync-panel {
-  background: var(--bg3);
-  border: 1px solid var(--gray3);
-  border-radius: 5px;
-  padding: 13px;
-  margin-bottom: 32px;
-}
-.sync-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.sync-lbl { font-family:var(--fh); font-size:.55rem; letter-spacing:.3em; color:var(--gray); text-transform:uppercase; }
-.sync-code { font-family:var(--fh); font-size:.95rem; letter-spacing:.15em; color:var(--red3); margin-top:2px; }
-.sync-btns { display:flex; gap:5px; }
-.sbtn {
-  background: none;
-  border: 1px solid var(--gray3);
-  border-radius: 3px;
-  color: var(--gray);
-  font-family: var(--fb);
-  font-size: .72rem;
-  padding: 4px 8px;
-  cursor: pointer;
-  letter-spacing: .08em;
-  transition: all .18s;
-}
-.sbtn:hover { border-color:var(--red2); color:var(--red2); }
-.sync-status {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: .72rem;
-  color: var(--gray);
-  margin-top: 7px;
-}
-.sync-hint {
-  font-size: .7rem;
-  color: var(--gray2);
-  line-height: 1.55;
-  margin-top: 8px;
-}
-.sync-hint a { color:var(--red2); text-decoration:none; }
-.sync-hint a:hover { color:var(--red3); }
-
-/* ── FIREBASE SETUP MODAL ────────────────── */
-.setup-modal { max-width: 400px; }
-.setup-steps {
-  font-size: .8rem;
-  color: var(--gray);
-  line-height: 1.75;
-  margin-bottom: 14px;
-}
-.setup-steps strong { color:var(--red3); }
-.setup-ta {
-  width:100%; height:110px;
-  background: var(--bg);
-  border: 1px solid var(--gray3);
-  border-radius: 4px;
-  color: var(--gray);
-  font-family: monospace;
-  font-size: .68rem;
-  padding: 8px;
-  resize: none;
-  margin-bottom: 12px;
-  outline: none;
-}
-.setup-ta:focus { border-color: var(--red); }
-
-/* ── DETAIL MODAL ────────────────────────── */
 .detail-body {
-  font-size: .85rem;
-  color: var(--gray);
-  line-height: 2;
-  margin-bottom: 16px;
+  font-size:.85rem;
+  color:var(--gray);
+  line-height:2;
+  margin-bottom:16px;
 }
 .detail-body strong { color:var(--white); }
 
-/* ── CORNERS ─────────────────────────────── */
-.c { position:fixed; width:28px; height:28px; pointer-events:none; opacity:.25; z-index:10; }
-.c-tl { top:8px;    left:8px;    border-top:2px solid var(--red3); border-left:2px solid var(--red3); }
-.c-tr { top:8px;    right:8px;   border-top:2px solid var(--red3); border-right:2px solid var(--red3); }
-.c-bl { bottom:8px; left:8px;    border-bottom:2px solid var(--red3); border-left:2px solid var(--red3); }
-.c-br { bottom:8px; right:8px;   border-bottom:2px solid var(--red3); border-right:2px solid var(--red3); }
+/* ── CORNERS ──────────────────────────── */
+.c { position:fixed; width:24px; height:24px; pointer-events:none; opacity:.2; z-index:5; }
+.c-tl { top:8px; left:8px;   border-top:2px solid var(--red3); border-left:2px solid var(--red3); }
+.c-tr { top:8px; right:8px;  border-top:2px solid var(--red3); border-right:2px solid var(--red3); }
+.c-bl { bottom:8px; left:8px;  border-bottom:2px solid var(--red3); border-left:2px solid var(--red3); }
+.c-br { bottom:8px; right:8px; border-bottom:2px solid var(--red3); border-right:2px solid var(--red3); }
 </style>
 </head>
 <body>
 
-<!-- Tactical corners -->
-<div class="c c-tl"></div>
-<div class="c c-tr"></div>
-<div class="c c-bl"></div>
-<div class="c c-br"></div>
+<div class="c c-tl"></div><div class="c c-tr"></div>
+<div class="c c-bl"></div><div class="c c-br"></div>
 
-<!-- ── RATING MODAL ── -->
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-title">I AM MORE</div>
+  <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+  <div class="loader-status" id="loaderStatus">INITIALISIERUNG…</div>
+</div>
+
+<!-- RATING MODAL -->
 <div class="overlay" id="rateOverlay">
   <div class="modal">
     <div class="m-sub">Session beendet</div>
-    <div class="m-act" id="mActName">FITNESS</div>
-    <div class="m-dur" id="mDur">Dauer: 0m</div>
+    <div class="m-act" id="mActName"></div>
+    <div class="m-dur" id="mDur"></div>
     <div class="m-lbl">Wie war deine Session?</div>
     <div class="rate-grid" id="rateGrid"></div>
     <button class="m-btn" id="confirmBtn">BESTÄTIGEN</button>
   </div>
 </div>
 
-<!-- ── DETAIL MODAL ── -->
+<!-- DETAIL MODAL -->
 <div class="overlay" id="detailOverlay">
   <div class="modal">
-    <div class="m-sub">Session Details</div>
+    <div class="m-sub">Details</div>
     <div class="m-act" id="dActName"></div>
     <div class="detail-body" id="dBody"></div>
     <button class="m-btn" onclick="closeDetail()">SCHLIESSEN</button>
   </div>
 </div>
 
-<!-- ── FIREBASE SETUP MODAL ── -->
-<div class="overlay" id="fbOverlay">
-  <div class="modal setup-modal">
-    <div class="m-sub">Firebase Sync Einrichten</div>
-    <div class="m-act" style="font-size:.85rem; margin-bottom:14px; color:var(--gray);">Echtzeit-Sync zwischen allen Geräten</div>
-    <div class="setup-steps">
-      1. <strong>console.firebase.google.com</strong> öffnen<br>
-      2. Neues Projekt erstellen<br>
-      3. <strong>Realtime Database</strong> aktivieren → Test-Modus<br>
-      4. Projekteinstellungen → Web-App hinzufügen<br>
-      5. Config-JSON unten einfügen
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="app-title">I AM MORE</div>
+    <div class="fb-badge">
+      <div class="fb-dot" id="fbDot"></div>
+      <span id="fbLabel">SYNC</span>
     </div>
-    <textarea class="setup-ta" id="fbConfigInput" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"https://xxx-default-rtdb.firebaseio.com","projectId":"..."}'></textarea>
-    <div class="m-row">
-      <button class="m-btn" onclick="saveFbConfig()">SPEICHERN &amp; VERBINDEN</button>
-      <button class="m-btn sec" onclick="closeFbSetup()">ABBRECHEN</button>
-    </div>
-  </div>
-</div>
+  </header>
 
-<!-- ── HEADER ── -->
-<header>
-  <div>
-    <div class="header-logo">OPS CENTER</div>
-    <div class="header-sub">Tactical Life Monitor</div>
-  </div>
-  <div class="sync-indicator" onclick="openFbSetup()">
-    <div class="sync-dot" id="hdrDot"></div>
-    <span id="hdrSync">SYNC</span>
-  </div>
-</header>
-
-<main>
-
-  <!-- ── CLOCK ── -->
+  <!-- CLOCK -->
   <div class="clock-section">
-    <div class="clock-wrap">
-      <svg class="clock-svg" viewBox="0 0 270 270" id="clockSvg">
-        <!-- Base -->
-        <circle cx="135" cy="135" r="133" fill="#0a0a0a" stroke="#8B1A1A" stroke-width="1.5"/>
-        <circle cx="135" cy="135" r="127" fill="none" stroke="#181818" stroke-width="1"/>
-
-        <!-- Markers (built by JS) -->
+    <div class="clock-svg-wrap">
+      <svg class="clock-svg" viewBox="0 0 300 300" id="clockSvg">
+        <circle cx="150" cy="150" r="148" fill="#090909" stroke="#8B1A1A" stroke-width="1.5"/>
+        <circle cx="150" cy="150" r="141" fill="none" stroke="#161616" stroke-width="1"/>
         <g id="minMarkers"></g>
         <g id="hrMarkers"></g>
-
-        <!-- 24H label -->
-        <text x="135" y="162" text-anchor="middle"
-              font-family="Orbitron" font-size="7" fill="#3a3a3a" letter-spacing="2">24H</text>
-
-        <!-- Hands (positioned with translate+rotate in JS) -->
+        <text x="150" y="178" text-anchor="middle"
+              font-family="Orbitron" font-size="8" fill="#2e2e2e" letter-spacing="3">24H</text>
+        <!-- Hands -->
         <g id="hrHand">
-          <rect x="-2.5" y="-68" width="5" height="68" rx="2.5" fill="#dddddd" opacity=".9"/>
-          <rect x="-2.5" y="0"   width="5" height="12" rx="2.5" fill="#dddddd" opacity=".5"/>
+          <rect x="-3" y="-76" width="6" height="76" rx="3" fill="#dddddd" opacity=".9"/>
+          <rect x="-3" y="0"   width="6" height="14" rx="3" fill="#dddddd" opacity=".4"/>
         </g>
         <g id="mnHand">
-          <rect x="-1.5" y="-90" width="3" height="90" rx="1.5" fill="#ffffff"/>
-          <rect x="-1.5" y="0"   width="3" height="15" rx="1.5" fill="#ffffff" opacity=".4"/>
+          <rect x="-2" y="-102" width="4" height="102" rx="2" fill="#ffffff"/>
+          <rect x="-2" y="0"    width="4" height="18"  rx="2" fill="#ffffff" opacity=".35"/>
         </g>
         <g id="scHand">
-          <rect x="-0.7" y="-100" width="1.4" height="118" rx="0.7" fill="#C41E1E"/>
+          <rect x="-0.8" y="-112" width="1.6" height="132" rx="0.8" fill="#D42222"/>
         </g>
-
-        <!-- Cap -->
-        <circle cx="135" cy="135" r="4.5" fill="#C41E1E"/>
-        <circle cx="135" cy="135" r="2"   fill="#111"/>
+        <circle cx="150" cy="150" r="5" fill="#D42222"/>
+        <circle cx="150" cy="150" r="2.2" fill="#111"/>
       </svg>
     </div>
     <div class="digital" id="digitalTime">00:00:00</div>
@@ -542,80 +481,62 @@ main {
 
   <div class="div"></div>
 
-  <!-- ── ACTIVITIES ── -->
-  <section style="margin-bottom:4px;">
-    <div class="sec-title">// MISSION STATUS</div>
-    <div class="act-grid">
-      <button class="act-btn" id="btn-fitness"  onclick="toggleAct('fitness')">
-        <div class="act-led"></div>
-        <div class="act-icon">⚡</div>
-        <div class="act-name">FITNESS</div>
-        <div class="act-timer" id="t-fitness"></div>
-      </button>
-      <button class="act-btn" id="btn-business" onclick="toggleAct('business')">
-        <div class="act-led"></div>
-        <div class="act-icon">💼</div>
-        <div class="act-name">BUSINESS</div>
-        <div class="act-timer" id="t-business"></div>
-      </button>
-      <button class="act-btn" id="btn-school"   onclick="toggleAct('school')">
-        <div class="act-led"></div>
-        <div class="act-icon">🎯</div>
-        <div class="act-name">SCHOOL</div>
-        <div class="act-timer" id="t-school"></div>
-      </button>
-      <button class="act-btn" id="btn-sleep"    onclick="toggleAct('sleep')">
-        <div class="act-led"></div>
-        <div class="act-icon">🌙</div>
-        <div class="act-name">SLEEP</div>
-        <div class="act-timer" id="t-sleep"></div>
-      </button>
-    </div>
-  </section>
+  <!-- ACTIVITIES -->
+  <div class="act-grid">
+    <button class="act-btn" id="btn-fitness"  onclick="toggleAct('fitness')">
+      <div class="act-led"></div>
+      <div class="act-icon">⚡</div>
+      <div class="act-name">FITNESS</div>
+    </button>
+    <button class="act-btn" id="btn-business" onclick="toggleAct('business')">
+      <div class="act-led"></div>
+      <div class="act-icon">💼</div>
+      <div class="act-name">BUSINESS</div>
+    </button>
+    <button class="act-btn" id="btn-school"   onclick="toggleAct('school')">
+      <div class="act-led"></div>
+      <div class="act-icon">🎯</div>
+      <div class="act-name">SCHOOL</div>
+    </button>
+    <button class="act-btn" id="btn-sleep"    onclick="toggleAct('sleep')">
+      <div class="act-led"></div>
+      <div class="act-icon">🌙</div>
+      <div class="act-name">SLEEP</div>
+    </button>
+  </div>
+
+  <!-- ACTIVE TIMERS (below buttons) -->
+  <div id="activeStrip"></div>
 
   <div class="div"></div>
 
-  <!-- ── LOG TRAY ── -->
-  <section style="margin-bottom:4px;">
-    <div class="sec-title">// MISSION LOG</div>
-    <div class="log-tray" id="logTray">
-      <div class="log-empty" id="logEmpty">— NOCH KEINE EINTRÄGE —</div>
-    </div>
-  </section>
-
-  <div class="div"></div>
-
-  <!-- ── SYNC ── -->
-  <section>
-    <div class="sec-title">// SYNC PROTOKOLL</div>
-    <div class="sync-panel">
-      <div class="sync-row">
-        <div>
-          <div class="sync-lbl">Sync Code</div>
-          <div class="sync-code" id="syncCodeEl">----</div>
-        </div>
-        <div class="sync-btns">
-          <button class="sbtn" onclick="copySyncCode()">COPY</button>
-          <button class="sbtn" onclick="changeSyncCode()">ÄNDERN</button>
-        </div>
-      </div>
-      <div class="sync-status">
-        <div class="sync-dot" id="syncDot"></div>
-        <span id="syncStatusTxt">Offline — nur lokal gespeichert</span>
-      </div>
-      <div class="sync-hint" id="syncHint">
-        Gleicher Code auf allen Geräten + Firebase = Echtzeit-Sync.
-        <a href="#" onclick="openFbSetup();return false;">Firebase einrichten →</a>
-      </div>
-    </div>
-  </section>
-
-</main>
+  <!-- LOG -->
+  <div style="font-family:var(--fh); font-size:.55rem; letter-spacing:.38em; color:var(--red2); margin-bottom:10px;">// MISSION LOG</div>
+  <div class="log-wrap" id="logWrap">
+    <div class="log-empty" id="logEmpty">— NOCH KEINE EINTRÄGE —</div>
+  </div>
+</div>
 
 <script>
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════
+
+const FB = {
+  apiKey:            "AIzaSyBzrEOAFybuVPsfqYp9gaYsypTib50VcD8",
+  authDomain:        "objek-3d3fa.firebaseapp.com",
+  databaseURL:       "https://objek-3d3fa-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "objek-3d3fa",
+  storageBucket:     "objek-3d3fa.firebasestorage.app",
+  messagingSenderId: "838823739880",
+  appId:             "1:838823739880:web:49b09e58dae09ff19d645d"
+};
+
+const DB_PATH = 'iammore/v1';
+
+// ═══════════════════════════════════
 // CONSTANTS
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 
 const ACTS = {
   fitness:  { icon:'⚡', name:'FITNESS'  },
@@ -623,110 +544,162 @@ const ACTS = {
   school:   { icon:'🎯', name:'SCHOOL'   },
   sleep:    { icon:'🌙', name:'SLEEP'    }
 };
+const EMOJIS   = ['😭','😢','😞','😟','😐','🙂','😊','😀','😄','🤩'];
+const DAYS     = ['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
+const MONTHS   = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
+const CX=150, CY=150, R=135;
 
-const EMOJIS = ['😭','😢','😞','😟','😐','🙂','😊','😀','😄','🤩'];
-
-const DAYS   = ['SONNTAG','MONTAG','DIENSTAG','MITTWOCH','DONNERSTAG','FREITAG','SAMSTAG'];
-const MONTHS = ['JAN','FEB','MÄR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DEZ'];
-
-const CX = 135, CY = 135, R = 120;
-
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 // STATE
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 
-let state = { active: {}, log: [] };
-let syncCode = '';
-let pending  = null;
-let selRate  = null;
-let db       = null;
+let state   = { active:{}, log:[] };
+let db      = null;
+let pending = null;
+let selRate = null;
 
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
+// BOOT / LOADER
+// ═══════════════════════════════════
 
-function init() {
-  syncCode = localStorage.getItem('ops_code') || makeCode();
-  localStorage.setItem('ops_code', syncCode);
-  document.getElementById('syncCodeEl').textContent = syncCode;
+function setLoader(pct, txt) {
+  document.getElementById('loaderBar').style.width    = pct + '%';
+  document.getElementById('loaderStatus').textContent = txt;
+}
 
-  const raw = localStorage.getItem('ops_' + syncCode);
-  if (raw) try { state = JSON.parse(raw); } catch(_){}
-  if (!state.active) state.active = {};
-  if (!state.log)    state.log    = [];
+async function boot() {
+  setLoader(10, 'VERBINDE MIT FIREBASE…');
 
-  const fbRaw = localStorage.getItem('ops_fb');
-  if (fbRaw) try { loadFirebase(JSON.parse(fbRaw)); } catch(_){}
+  await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js');
+  setLoader(40, 'SDK GELADEN…');
+
+  await loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js');
+  setLoader(65, 'DATENBANK VERBINDEN…');
+
+  try {
+    if (!window.firebase.apps.length) window.firebase.initializeApp(FB);
+    db = window.firebase.database();
+    await firstSync();
+    setLoader(95, 'BEREIT');
+  } catch(e) {
+    setLoader(95, 'OFFLINE — LOKALE DATEN');
+    const raw = localStorage.getItem('iam_state');
+    if (raw) try { state = JSON.parse(raw); } catch(_){}
+  }
+
+  await sleep(400);
 
   buildClockFace();
   buildRateGrid();
   renderActs();
   renderLog();
+  startLive();
 
-  requestAnimationFrame(clockLoop);
-  setInterval(timerTick, 1000);
+  const loader = document.getElementById('loader');
+  loader.classList.add('fade');
+  setTimeout(() => { loader.style.display = 'none'; }, 650);
+  document.getElementById('app').classList.add('show');
 }
 
-function makeCode() {
-  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ2345679';
-  let s = '';
-  for (let i=0;i<8;i++) { if(i===4)s+='-'; s+=c[Math.floor(Math.random()*c.length)]; }
-  return s;
+function firstSync() {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), 5000);
+    db.ref(DB_PATH).once('value', snap => {
+      clearTimeout(timer);
+      const data = snap.val();
+      if (data) {
+        state = data;
+        if (!state.active) state.active = {};
+        if (!state.log)    state.log    = [];
+      } else {
+        save();
+      }
+      // Now listen for real-time updates
+      db.ref(DB_PATH).on('value', onDbUpdate);
+      setFbStatus(true);
+      resolve();
+    }, err => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
 }
 
-// ══════════════════════════════════════════
-// PERSISTENCE
-// ══════════════════════════════════════════
+function onDbUpdate(snap) {
+  const data = snap.val();
+  if (!data) return;
+  state = data;
+  if (!state.active) state.active = {};
+  if (!state.log)    state.log    = [];
+  renderActs();
+  renderLog();
+  setFbStatus(true);
+}
+
+function setFbStatus(online) {
+  const dot   = document.getElementById('fbDot');
+  const label = document.getElementById('fbLabel');
+  dot.className   = 'fb-dot' + (online ? ' on' : '');
+  label.textContent = online ? 'LIVE' : 'OFFLINE';
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload  = res;
+    s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════
+// PERSIST
+// ═══════════════════════════════════
 
 function save() {
-  localStorage.setItem('ops_' + syncCode, JSON.stringify(state));
-  if (db) {
-    db.ref('u/' + syncCode.replace('-','')).set(state).catch(()=>{});
-  }
+  localStorage.setItem('iam_state', JSON.stringify(state));
+  if (db) db.ref(DB_PATH).set(state).catch(() => setFbStatus(false));
 }
 
-// ══════════════════════════════════════════
-// CLOCK FACE
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════
 
 function buildClockFace() {
   const minG = document.getElementById('minMarkers');
   const hrG  = document.getElementById('hrMarkers');
 
-  // Minute ticks (skip every 5th — those align with hour marks)
   for (let i=0; i<60; i++) {
-    if (i % 5 === 0) continue;
+    if (i%5===0) continue;
     const a  = (i/60)*2*Math.PI - Math.PI/2;
-    const x1 = CX + R*Math.cos(a),    y1 = CY + R*Math.sin(a);
-    const x2 = CX + (R-5)*Math.cos(a),y2 = CY + (R-5)*Math.sin(a);
-    const l  = mkLine(x1,y1,x2,y2,'#252525','1');
-    minG.appendChild(l);
+    const x1 = CX + R*Math.cos(a),     y1 = CY + R*Math.sin(a);
+    const x2 = CX + (R-6)*Math.cos(a), y2 = CY + (R-6)*Math.sin(a);
+    minG.appendChild(mkLine(x1,y1,x2,y2,'#222','1'));
   }
 
-  // 24 hour marks
   for (let h=0; h<24; h++) {
-    const a       = (h/24)*2*Math.PI - Math.PI/2;
-    const major   = h%6===0;
-    const quarter = h%3===0;
-    const inner   = major ? R-18 : quarter ? R-12 : R-7;
-    const stroke  = major ? '#8B1A1A' : quarter ? '#3a3a3a' : '#282828';
-    const sw      = major ? '2' : quarter ? '1.5' : '1';
-
+    const a      = (h/24)*2*Math.PI - Math.PI/2;
+    const major  = h%6===0;
+    const quarter= h%3===0;
+    const inner  = major ? R-20 : quarter ? R-13 : R-8;
+    const stroke = major ? '#8B1A1A' : quarter ? '#333' : '#242424';
+    const sw     = major ? '2.5' : quarter ? '1.5' : '1';
     hrG.appendChild(mkLine(
-      CX + R*Math.cos(a),     CY + R*Math.sin(a),
-      CX + inner*Math.cos(a), CY + inner*Math.sin(a),
+      CX+R*Math.cos(a),     CY+R*Math.sin(a),
+      CX+inner*Math.cos(a), CY+inner*Math.sin(a),
       stroke, sw
     ));
-
-    // Labels: 0,6,12,18 + 3,9,15,21
     if (major || quarter) {
-      const lr = major ? R-28 : R-22;
-      const lx = CX + lr*Math.cos(a);
-      const ly = CY + lr*Math.sin(a);
-      const txt = mkSvgText(lx, ly+3, h===0?'0':String(h),
-        major ? 11 : 8,
-        major ? '#C41E1E' : '#444');
-      hrG.appendChild(txt);
+      const lr = major ? R-32 : R-24;
+      hrG.appendChild(mkTxt(
+        CX + lr*Math.cos(a),
+        CY + lr*Math.sin(a) + 3.5,
+        h===0?'0':String(h),
+        major ? 12 : 8,
+        major ? '#C41E1E' : '#3a3a3a'
+      ));
     }
   }
 }
@@ -738,8 +711,7 @@ function mkLine(x1,y1,x2,y2,stroke,sw) {
   l.setAttribute('stroke',stroke); l.setAttribute('stroke-width',sw);
   return l;
 }
-
-function mkSvgText(x,y,txt,sz,fill) {
+function mkTxt(x,y,txt,sz,fill) {
   const t = document.createElementNS('http://www.w3.org/2000/svg','text');
   t.setAttribute('x',x); t.setAttribute('y',y);
   t.setAttribute('text-anchor','middle');
@@ -751,48 +723,37 @@ function mkSvgText(x,y,txt,sz,fill) {
   return t;
 }
 
-// ══════════════════════════════════════════
-// CLOCK LOOP
-// ══════════════════════════════════════════
+function startLive() {
+  requestAnimationFrame(clockLoop);
+  setInterval(timerTick, 1000);
+}
 
 function clockLoop() {
   const n  = new Date();
-  const h  = n.getHours(), m = n.getMinutes(),
-        s  = n.getSeconds(), ms = n.getMilliseconds();
-
-  const scA = (s + ms/1000) / 60 * 360;
-  const mnA = (m + (s+ms/1000)/60) / 60 * 360;
-  const hrA = (h + m/60 + s/3600) / 24 * 360;
-
-  setHand('hrHand', hrA);
-  setHand('mnHand', mnA);
-  setHand('scHand', scA);
-
-  document.getElementById('digitalTime').textContent =
-    p2(h)+':'+p2(m)+':'+p2(s);
+  const h=n.getHours(), m=n.getMinutes(), s=n.getSeconds(), ms=n.getMilliseconds();
+  setHand('scHand', (s+ms/1000)/60*360);
+  setHand('mnHand', (m+(s+ms/1000)/60)/60*360);
+  setHand('hrHand', (h+m/60+s/3600)/24*360);
+  document.getElementById('digitalTime').textContent = p2(h)+':'+p2(m)+':'+p2(s);
   document.getElementById('dateLine').textContent =
     DAYS[n.getDay()]+' · '+p2(n.getDate())+' '+MONTHS[n.getMonth()]+' '+n.getFullYear();
-
   requestAnimationFrame(clockLoop);
 }
-
 function setHand(id, angle) {
-  document.getElementById(id).setAttribute('transform',
-    `translate(${CX},${CY}) rotate(${angle})`);
+  document.getElementById(id).setAttribute('transform',`translate(${CX},${CY}) rotate(${angle})`);
 }
-
 function p2(n) { return String(n).padStart(2,'0'); }
 
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 // ACTIVITIES
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 
 function toggleAct(key) {
   if (state.active[key]) {
     const start = state.active[key].start;
     const end   = Date.now();
     pending = { key, start, end, dur: end-start };
-    showRateModal(key, pending.dur);
+    showRate(key, pending.dur);
   } else {
     state.active[key] = { start: Date.now() };
     save();
@@ -802,18 +763,32 @@ function toggleAct(key) {
 
 function renderActs() {
   Object.keys(ACTS).forEach(k => {
-    const btn = document.getElementById('btn-'+k);
-    btn.classList.toggle('active', !!state.active[k]);
-    if (!state.active[k]) document.getElementById('t-'+k).textContent = '';
+    document.getElementById('btn-'+k).classList.toggle('active', !!state.active[k]);
   });
+  renderActiveStrip();
 }
 
 function timerTick() {
+  renderActiveStrip();
+}
+
+function renderActiveStrip() {
+  const strip = document.getElementById('activeStrip');
+  strip.innerHTML = '';
+  const keys = Object.keys(state.active || {});
+  if (keys.length === 0) { strip.classList.remove('show'); return; }
+  strip.classList.add('show');
   const now = Date.now();
-  Object.keys(ACTS).forEach(k => {
-    if (state.active[k]) {
-      document.getElementById('t-'+k).textContent = fmtDur(now - state.active[k].start);
-    }
+  keys.forEach(k => {
+    const cfg = ACTS[k];
+    if (!cfg) return;
+    const row = document.createElement('div');
+    row.className = 'active-row';
+    row.innerHTML =
+      `<span class="active-ic">${cfg.icon}</span>` +
+      `<span class="active-name">${cfg.name}</span>` +
+      `<span class="active-dur">${fmtDur(now - state.active[k].start)}</span>`;
+    strip.appendChild(row);
   });
 }
 
@@ -827,56 +802,44 @@ function fmtDur(ms) {
   return s+'s';
 }
 
-// ══════════════════════════════════════════
-// RATING MODAL
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
+// RATING
+// ═══════════════════════════════════
 
 function buildRateGrid() {
   const g = document.getElementById('rateGrid');
   EMOJIS.forEach((e,i) => {
     const b = document.createElement('button');
     b.className = 'rate-btn';
-    b.innerHTML = `<span class="rate-emoji">${e}</span><span class="rate-num">${i+1}</span>`;
-    b.onclick = () => pickRate(i+1);
+    b.innerHTML = `<span class="r-emoji">${e}</span><span class="r-num">${i+1}</span>`;
+    b.onclick = () => { selRate=i+1; document.querySelectorAll('.rate-btn').forEach((x,j)=>x.classList.toggle('sel',j===i)); };
     g.appendChild(b);
   });
 }
 
-function pickRate(v) {
-  selRate = v;
-  document.querySelectorAll('.rate-btn').forEach((b,i) => b.classList.toggle('sel', i+1===v));
-}
-
-function showRateModal(key, dur) {
+function showRate(key, dur) {
   selRate = null;
-  document.querySelectorAll('.rate-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.rate-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('mActName').textContent = ACTS[key].name;
-  document.getElementById('mDur').textContent     = 'Dauer: ' + fmtDur(dur);
+  document.getElementById('mDur').textContent     = 'Dauer: '+fmtDur(dur);
   document.getElementById('rateOverlay').classList.add('show');
 }
 
 document.getElementById('confirmBtn').onclick = function() {
   if (!selRate) {
-    const g = document.getElementById('rateGrid');
+    const g=document.getElementById('rateGrid');
     g.style.opacity='.3'; setTimeout(()=>g.style.opacity='1',220);
     return;
   }
-  const { key, start, end, dur } = pending;
+  const {key,start,end,dur} = pending;
   const entry = {
-    id:     Date.now(),
-    key,
-    start,
-    end,
-    dur,
-    rating: selRate,
-    dateStr: new Date(end).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}),
-    timeStr: new Date(end).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})
+    id: Date.now(), key, start, end, dur, rating: selRate,
+    ds: new Date(end).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}),
+    ts: new Date(end).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})
   };
-
   state.log.unshift(entry);
   if (state.log.length > 100) state.log.pop();
   delete state.active[key];
-
   save();
   renderActs();
   renderLog();
@@ -884,178 +847,51 @@ document.getElementById('confirmBtn').onclick = function() {
   pending = null;
 };
 
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 // LOG
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
 
 function renderLog() {
-  const tray  = document.getElementById('logTray');
+  const wrap  = document.getElementById('logWrap');
   const empty = document.getElementById('logEmpty');
-  tray.querySelectorAll('.log-card').forEach(c=>c.remove());
-
-  if (!state.log || state.log.length===0) {
-    empty.style.display='block'; return;
-  }
-  empty.style.display='none';
-
+  wrap.querySelectorAll('.log-card').forEach(c=>c.remove());
+  if (!state.log || state.log.length===0) { empty.style.display='block'; return; }
+  empty.style.display = 'none';
   state.log.forEach(e => {
-    const cfg = ACTS[e.key];
-    if (!cfg) return;
+    const cfg = ACTS[e.key]; if (!cfg) return;
     const card = document.createElement('div');
-    card.className='log-card';
-    card.innerHTML=`
-      <div class="log-ic">${cfg.icon}</div>
-      <div class="log-info">
-        <div class="log-name">${cfg.name}</div>
-        <div class="log-meta">
-          <span class="log-dur">${fmtDur(e.dur)}</span>
-          <span>${e.dateStr} ${e.timeStr}</span>
-        </div>
-      </div>
-      <div class="log-rate">${EMOJIS[e.rating-1]}</div>
-      <div class="log-arrow" onclick="showDetail(${e.id})">›</div>
-    `;
-    tray.appendChild(card);
+    card.className = 'log-card';
+    card.innerHTML =
+      `<div class="lc-icon">${cfg.icon}</div>` +
+      `<div class="lc-info">` +
+        `<div class="lc-name">${cfg.name}</div>` +
+        `<div class="lc-meta"><span class="lc-dur">${fmtDur(e.dur)}</span><span>${e.ds} ${e.ts}</span></div>` +
+      `</div>` +
+      `<div class="lc-emoji">${EMOJIS[e.rating-1]}</div>` +
+      `<div class="lc-arrow" onclick="showDetail(${e.id})">›</div>`;
+    wrap.appendChild(card);
   });
 }
 
 function showDetail(id) {
-  const e = state.log.find(x=>x.id===id);
-  if (!e) return;
-  const cfg   = ACTS[e.key];
-  const start = new Date(e.start).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-  const end   = new Date(e.end).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const e   = state.log.find(x=>x.id===id); if(!e) return;
+  const cfg = ACTS[e.key];
+  const s   = new Date(e.start).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const en  = new Date(e.end).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('dActName').textContent = cfg.icon+' '+cfg.name;
   document.getElementById('dBody').innerHTML =
-    `<strong>Datum:</strong> ${e.dateStr}<br>
-     <strong>Start:</strong> ${start}<br>
-     <strong>Ende:</strong>  ${end}<br>
-     <strong>Dauer:</strong> ${fmtDur(e.dur)}<br>
-     <strong>Bewertung:</strong> ${e.rating}/10 ${EMOJIS[e.rating-1]}`;
+    `<strong>Datum:</strong> ${e.ds}<br><strong>Start:</strong> ${s}<br>` +
+    `<strong>Ende:</strong> ${en}<br><strong>Dauer:</strong> ${fmtDur(e.dur)}<br>` +
+    `<strong>Bewertung:</strong> ${e.rating}/10 ${EMOJIS[e.rating-1]}`;
   document.getElementById('detailOverlay').classList.add('show');
 }
-function closeDetail() {
-  document.getElementById('detailOverlay').classList.remove('show');
-}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('show'); }
 
-// ══════════════════════════════════════════
-// SYNC CODE
-// ══════════════════════════════════════════
+// ═══════════════════════════════════
+// GO
+// ═══════════════════════════════════
 
-function copySyncCode() {
-  const copy = () => {
-    navigator.clipboard.writeText(syncCode).then(()=>{
-      const b = document.querySelector('.sbtn');
-      b.textContent='✓ KOPIERT'; setTimeout(()=>b.textContent='COPY',2000);
-    }).catch(()=>prompt('Sync Code:',syncCode));
-  };
-  copy();
-}
-
-function changeSyncCode() {
-  const input = prompt('Sync Code eingeben (leer = neuer Code generieren):');
-  if (input===null) return;
-  const code = input.trim().toUpperCase() || makeCode();
-  if (code===syncCode) return;
-  syncCode = code;
-  localStorage.setItem('ops_code', syncCode);
-  document.getElementById('syncCodeEl').textContent = syncCode;
-
-  const raw = localStorage.getItem('ops_' + syncCode);
-  state = raw ? JSON.parse(raw) : { active:{}, log:[] };
-
-  if (db) listenDb();
-  renderActs();
-  renderLog();
-}
-
-// ══════════════════════════════════════════
-// FIREBASE
-// ══════════════════════════════════════════
-
-function openFbSetup() {
-  const existing = localStorage.getItem('ops_fb');
-  if (existing) document.getElementById('fbConfigInput').value = existing;
-  document.getElementById('fbOverlay').classList.add('show');
-}
-function closeFbSetup() { document.getElementById('fbOverlay').classList.remove('show'); }
-
-function saveFbConfig() {
-  const raw = document.getElementById('fbConfigInput').value.trim();
-  try {
-    const cfg = JSON.parse(raw);
-    if (!cfg.databaseURL) throw new Error('databaseURL fehlt in der Config');
-    localStorage.setItem('ops_fb', JSON.stringify(cfg));
-    loadFirebase(cfg);
-    closeFbSetup();
-  } catch(e) {
-    alert('Fehler: '+e.message);
-  }
-}
-
-function loadFirebase(cfg) {
-  setSyncStatus('syncing','Verbinde…');
-
-  function initDb() {
-    try {
-      if (!window.firebase.apps.length) window.firebase.initializeApp(cfg);
-      db = window.firebase.database();
-      listenDb();
-    } catch(e) {
-      setSyncStatus('offline','Firebase Fehler: '+e.message);
-    }
-  }
-
-  if (window.firebase && window.firebase.database) { initDb(); return; }
-
-  const s1 = document.createElement('script');
-  s1.src = 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js';
-  s1.onload = () => {
-    const s2 = document.createElement('script');
-    s2.src = 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js';
-    s2.onload = initDb;
-    s2.onerror = () => setSyncStatus('offline','Firebase SDK Ladefehler');
-    document.head.appendChild(s2);
-  };
-  s1.onerror = () => setSyncStatus('offline','Firebase SDK Ladefehler');
-  document.head.appendChild(s1);
-}
-
-function listenDb() {
-  if (!db) return;
-  const key = 'u/' + syncCode.replace('-','');
-  db.ref(key).on('value', snap => {
-    const data = snap.val();
-    if (data) {
-      state = data;
-      if (!state.active) state.active = {};
-      if (!state.log)    state.log    = [];
-      renderActs();
-      renderLog();
-    } else {
-      save();
-    }
-    setSyncStatus('online','Online · Sync aktiv');
-    document.getElementById('syncHint').style.display = 'none';
-  }, err => {
-    setSyncStatus('offline','Sync Fehler — lokal gespeichert');
-  });
-}
-
-function setSyncStatus(cls, txt) {
-  ['syncDot','hdrDot'].forEach(id => {
-    const el = document.getElementById(id);
-    el.className = 'sync-dot' + (cls ? ' '+cls : '');
-  });
-  document.getElementById('syncStatusTxt').textContent = txt;
-  document.getElementById('hdrSync').textContent = cls==='online' ? 'ONLINE' : cls==='syncing' ? 'SYNC…' : 'SYNC';
-}
-
-// ══════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════
-
-init();
+boot();
 </script>
 </body>
 </html>
