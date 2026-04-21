@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dein Masterplan 💪</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #0d0d16;
+    --border: #1e1e2a;
+    --text: #ffffff;
+    --muted: #666;
+    --dim: #444;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+  /* HEADER */
+  .header { text-align: center; margin-bottom: 20px; }
+  .header-sub { font-size: 11px; color: #555; letter-spacing: 4px; margin-bottom: 4px; text-transform: uppercase; }
+  .header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 7vw, 56px);
+    background: linear-gradient(90deg, #FF4D4D, #FFB84D, #4DFF91, #4D9FFF, #C84DFF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .header-date { font-size: 13px; color: #888; letter-spacing: 2px; margin-top: 4px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+  .tab-btn {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--bg2);
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { border-color: #444; color: #aaa; }
+  .tab-btn.active { color: #000; border-color: transparent; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(20px, 4vw, 30px);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title span { font-size: 13px; color: var(--muted); font-family: 'Barlow Condensed'; letter-spacing: 1px; }
+
+  /* CARD */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* DAY SELECTOR */
+  .day-btns { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+  .day-btn {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 56px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--bg2);
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .day-btn:hover { transform: translateY(-2px); }
+  .day-btn.active { color: #000; }
+  .day-btn .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4DFF91;
+    position: absolute;
+    top: 6px; right: 6px;
+    display: none;
+  }
+  .day-btn.has-data .dot { display: block; }
+
+  /* TRAINING CARD */
+  .training-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .training-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(22px, 5vw, 32px); line-height: 1; }
+  .training-focus { font-size: 13px; color: #aaa; margin-top: 2px; }
+  .cardio-badge {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    text-align: right;
+    max-width: 150px;
+    flex-shrink: 0;
+  }
+
+  /* EXERCISE ROWS */
+  .exercise-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 9px 12px;
+    margin-bottom: 6px;
+    transition: background 0.15s;
+    cursor: pointer;
+    user-select: none;
+  }
+  .exercise-row.done { background: #0d1a0d; }
+  .ex-num {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .ex-info { flex: 1; }
+  .ex-name { font-size: 14px; font-weight: 700; line-height: 1.2; transition: color 0.15s; }
+  .ex-tip { font-size: 11px; color: var(--muted); }
+  .ex-sets { font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .ex-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .exercise-row.done .ex-check { background: #4DFF91; border-color: #4DFF91; color: #000; }
+
+  /* CARDIO DONE TOGGLE */
+  .cardio-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .cardio-toggle.done { background: #0a1a12; border-color: #4DFF9144; }
+  .toggle-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .cardio-toggle.done .toggle-circle { background: #4DFF91; border-color: #4DFF91; }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin-top: 10px; }
+  .progress-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-bottom: 4px; }
+  .progress-bar { height: 4px; background: #1a1a2a; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+
+  /* FOOD SECTION */
+  .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .food-card {
+    background: var(--bg2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-top-width: 2px;
+  }
+  .food-cat { font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; font-weight: 700; }
+  .food-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #1a1a24;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.15s;
+    border-radius: 4px;
+  }
+  .food-item:last-of-type { border-bottom: none; }
+  .food-item.eaten { opacity: 0.5; }
+  .food-item-left .food-name { font-size: 12px; font-weight: 700; line-height: 1.2; }
+  .food-item-left .food-portion { font-size: 10px; color: var(--muted); }
+  .food-item-right .food-kcal { font-size: 11px; color: #888; }
+  .food-item-right .food-pro { font-size: 10px; }
+  .food-check-icon { font-size: 12px; margin-right: 4px; }
+  .food-note { font-size: 10px; font-style: italic; margin-top: 6px; }
+
+  /* MEAL TIMING */
+  .meal-row {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .meal-time { font-size: 13px; color: #FFB84D; font-weight: 700; flex-shrink: 0; width: 110px; }
+  .meal-kcal { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .meal-options { flex: 1; }
+  .meal-option {
+    font-size: 12px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meal-option:hover { background: #1a1a24; }
+  .meal-option.selected { background: #0d1a0d; color: #4DFF91; }
+  .meal-option .opt-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid #444;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .meal-option.selected .opt-dot { background: #4DFF91; border-color: #4DFF91; }
+
+  /* RULES */
+  .rules-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rule-pill {
+    background: var(--bg2);
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ddd;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .rule-pill.done { background: #0d1a0d; border-color: #4DFF9144; color: #4DFF91; }
+
+  /* GOAL BAR */
+  .goal-section {
+    background: linear-gradient(135deg, #1a0a0a, #0a1a0a);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-top: 16px;
+  }
+  .goal-label { font-size: 11px; color: #555; letter-spacing: 3px; margin-bottom: 8px; }
+  .goal-nums { display: flex; justify-content: center; gap: 20px; align-items: center; }
+  .goal-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; }
+  .goal-sub { font-size: 11px; color: var(--muted); }
+  .arrow { font-size: 22px; color: #444; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a2a;
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: #fff;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* WEIGHT LOG */
+  .weight-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .weight-input {
+    background: var(--bg3);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    width: 100px;
+    outline: none;
+    text-align: center;
+  }
+  .weight-input:focus { border-color: #4DFF91; }
+  .btn-save {
+    background: #4DFF91;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: opacity 0.15s;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .weight-history { font-size: 12px; color: var(--muted); }
+  .weight-entry { padding: 4px 0; border-bottom: 1px solid #1a1a2a; display: flex; justify-content: space-between; }
+  .weight-entry:last-child { border-bottom: none; }
+
+  /* SYNC STATUS */
+  .sync-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #555;
+    margin-right: 5px;
+    vertical-align: middle;
+    transition: background 0.3s;
+  }
+  .sync-dot.ok { background: #4DFF91; }
+  .sync-dot.err { background: #FF4D4D; }
+  .sync-dot.loading { background: #FFB84D; animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* PAGE VISIBILITY */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS MINI */
+  .stats-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .stat-box {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 26px; }
+  .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+  /* Responsive tweaks */
+  @media (max-width: 400px) {
+    .training-header { flex-direction: column; }
+    .cardio-badge { max-width: 100%; text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-sub">Transformation Plan · 120kg → 100kg</div>
+  <div class="header-title">DEIN MASTERPLAN</div>
+  <div class="header-date" id="currentDate"></div>
+  <div style="font-size:11px;margin-top:6px;">
+    <span class="sync-dot" id="syncDot"></span>
+    <span id="syncStatus" style="color:#555;font-size:11px;letter-spacing:1px;">Verbinde...</span>
+  </div>
+</div>
+
+<!-- MAIN TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('training')" id="tab-training" style="background:#FF4D4D;color:#000;border-color:#FF4D4D;">💪 Training</button>
+  <button class="tab-btn" onclick="switchTab('food')" id="tab-food">🥩 Essen</button>
+  <button class="tab-btn" onclick="switchTab('timing')" id="tab-timing">⏰ Timing</button>
+  <button class="tab-btn" onclick="switchTab('rules')" id="tab-rules">⚡ Regeln</button>
+  <button class="tab-btn" onclick="switchTab('weight')" id="tab-weight">📊 Gewicht</button>
+</div>
+
+<!-- ===== TRAINING PAGE ===== -->
+<div class="page active" id="page-training">
+
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#555;letter-spacing:2px;">TAG WÄHLEN:</div>
+  </div>
+
+  <div class="day-btns" id="dayBtns"></div>
+
+  <!-- PROGRESS -->
+  <div class="card" id="trainingCard" style="border-left: 3px solid #FF4D4D;">
+    <div class="training-header">
+      <div>
+        <div class="training-name" id="dayName">MONTAG</div>
+        <div class="training-focus" id="dayFocus"></div>
+      </div>
+      <div class="cardio-badge" id="cardioInfo"></div>
+    </div>
+
+    <!-- Cardio done toggle -->
+    <div class="cardio-toggle" id="cardioToggle" onclick="toggleCardio()">
+      <div class="toggle-circle" id="cardioCircle">🏃</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;" id="cardioLabel">Cardio erledigt?</div>
+        <div style="font-size:11px;color:#888;">Antippen wenn fertig</div>
+      </div>
+    </div>
+
+    <div id="exerciseList"></div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">FORTSCHRITT HEUTE</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%;background:#4DFF91;"></div>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:4px;" id="progressText">0 / 0 erledigt</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOOD PAGE ===== -->
+<div class="page" id="page-food">
+  <div class="section-title">ESSEN <span>Was hast du heute gegessen?</span></div>
+  <div class="food-grid" id="foodGrid"></div>
+</div>
+
+<!-- ===== TIMING PAGE ===== -->
+<div class="page" id="page-timing">
+  <div class="section-title">MAHLZEITEN <span>Wähle was du gegessen hast</span></div>
+  <div id="mealList"></div>
+</div>
+
+<!-- ===== RULES PAGE ===== -->
+<div class="page" id="page-rules">
+  <div class="section-title">IRON RULES <span>Täglich abhaken</span></div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" id="ruleCount" style="color:#4DFF91;">0</div>
+      <div class="stat-label">VON 8 HEUTE</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="streakCount" style="color:#FFB84D;">0</div>
+      <div class="stat-label">TAGE STREAK</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="rules-grid" id="rulesList"></div>
+  </div>
+
+  <!-- GOAL -->
+  <div class="goal-section">
+    <div class="goal-label">ZIEL · GEBURTSTAG JULI</div>
+    <div class="goal-nums">
+      <div>
+        <div class="goal-num" style="color:#FF4D4D;">120kg</div>
+        <div class="goal-sub">JETZT</div>
+      </div>
+      <div class="arrow">→</div>
+      <div>
+        <div class="goal-num" style="color:#4DFF91;" id="currentWeightDisplay">—</div>
+        <div class="goal-sub">AKTUELL</div>
+      </div>
+      <div class="arrow">→</div>
+      <div>
+        <div class="goal-num" style="color:#FFB84D;">100kg</div>
+        <div class="goal-sub">ZIEL</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#444;font-family:'Barlow Condensed';margin-top:10px;letter-spacing:1px;">
+      0.5–1KG PRO WOCHE · 10–12 WOCHEN · ALLES LIEGT BEI DIR
+    </div>
+  </div>
+</div>
+
+<!-- ===== WEIGHT PAGE ===== -->
+<div class="page" id="page-weight">
+  <div class="section-title">GEWICHT <span>Einmal pro Woche</span></div>
+
+  <div class="card">
+    <div style="font-size:13px;color:#888;margin-bottom:10px;letter-spacing:1px;">HEUTE EINTRAGEN</div>
+    <div class="weight-input-row">
+      <input type="number" class="weight-input" id="weightInput" placeholder="0" step="0.1" min="50" max="200">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#888;">KG</div>
+      <button class="btn-save" onclick="saveWeight()">SPEICHERN</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;color:#888;margin-bottom:10px;letter-spacing:1px;">VERLAUF</div>
+    <div class="weight-history" id="weightHistory">
+      <div style="color:#555;text-align:center;padding:20px;">Noch keine Einträge</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Gespeichert</div>
+
+<!-- FIREBASE + APP SCRIPT -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBzrEOAFybuVPsfqYp9gaYsypTib50VcD8",
+    authDomain: "objek-3d3fa.firebaseapp.com",
+    databaseURL: "https://objek-3d3fa-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "objek-3d3fa",
+    storageBucket: "objek-3d3fa.firebasestorage.app",
+    messagingSenderId: "838823739880",
+    appId: "1:838823739880:web:49b09e58dae09ff19d645d",
+    measurementId: "G-8TS56FRFXG"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ---- DATA ----
+  const days = [
+    { label:"MO", name:"MONTAG", focus:"Push – Brust / Schulter / Trizeps", cardio:"Stairmaster 30 Min · Stufe 9 · 300 Hm", color:"#FF4D4D",
+      exercises:[
+        {name:"Bankdrücken", sets:"4×8", tip:"Schwer, kontrolliert"},
+        {name:"Schrägbankdrücken", sets:"3×10", tip:"Obere Brust"},
+        {name:"Schulterdrücken", sets:"4×8", tip:"Schulterbreite"},
+        {name:"Seitheben", sets:"3×15", tip:"Leicht, sauber"},
+        {name:"Trizeps Pushdown", sets:"3×12", tip:"Ellbogen fixiert"},
+      ]},
+    { label:"DI", name:"DIENSTAG", focus:"Pull – Rücken / Bizeps", cardio:"HIIT 20 Min (30s Sprint / 90s Pause)", color:"#4D9FFF",
+      exercises:[
+        {name:"Klimmzüge / Lat-Zug", sets:"4×8", tip:"Breiter Griff"},
+        {name:"Rudern (Maschine/LH)", sets:"4×10", tip:"Schulterblätter quetschen"},
+        {name:"Facepulls", sets:"3×15", tip:"Schultergesundheit"},
+        {name:"Bizepscurls (SH)", sets:"3×10", tip:"Supinieren oben"},
+        {name:"Hammer Curls", sets:"3×12", tip:"Unterarm mittrainieren"},
+      ]},
+    { label:"MI", name:"MITTWOCH", focus:"Beine – Quad / Hinten / Waden", cardio:"Stairmaster 30 Min · Stufe 9 · 300 Hm", color:"#4DFF91",
+      exercises:[
+        {name:"Kniebeugen", sets:"4×8", tip:"Schwer – Kern der Einheit"},
+        {name:"Beinpresse", sets:"4×10", tip:"Tief runter gehen"},
+        {name:"Leg Curl (liegend)", sets:"3×12", tip:"Ischiocrurale"},
+        {name:"Ausfallschritte", sets:"3×10/Bein", tip:"Gleichgewicht"},
+        {name:"Wadenheben", sets:"4×20", tip:"Voll strecken unten"},
+      ]},
+    { label:"DO", name:"DONNERSTAG", focus:"Push – Variation / Volumen", cardio:"30 Min Fahrrad mittlere Intensität", color:"#FFB84D",
+      exercises:[
+        {name:"Kurzhantel Schrägbank", sets:"4×10", tip:"Gut für Breite"},
+        {name:"Dips (gewichtet)", sets:"3×10", tip:"Brust nach vorn lehnen"},
+        {name:"Laterals (Kabel)", sets:"3×15", tip:"Deltoid brennen lassen"},
+        {name:"Arnold Press", sets:"3×10", tip:"Schulter-Volumen"},
+        {name:"Skull Crushers", sets:"3×10", tip:"Trizeps Masse"},
+      ]},
+    { label:"FR", name:"FREITAG", focus:"Pull – Variation / Volumen", cardio:"HIIT 20 Min", color:"#C84DFF",
+      exercises:[
+        {name:"T-Bar Rudern", sets:"4×8", tip:"Bester Rücken-Masseübung"},
+        {name:"Einarmiges KH Rudern", sets:"3×10", tip:"Volle ROM"},
+        {name:"Kabel-Bizepscurl", sets:"3×12", tip:"Konstante Spannung"},
+        {name:"Reverse Curls", sets:"3×12", tip:"Brachialis"},
+        {name:"Shrugs (Trap)", sets:"4×15", tip:"Oben kurz halten"},
+      ]},
+    { label:"SA", name:"SAMSTAG", focus:"Beine + Core – Intensiv", cardio:"Stairmaster 40 Min · Stufe 9", color:"#FF4D9F",
+      exercises:[
+        {name:"Kreuzheben", sets:"4×6", tip:"König der Übungen"},
+        {name:"Beinstrecker", sets:"3×15", tip:"Erschöpfungsatz"},
+        {name:"Sumo Kniebeugen", sets:"3×12", tip:"Adduktoren"},
+        {name:"Plank", sets:"3×60s", tip:"Neutral halten"},
+        {name:"Russian Twists", sets:"3×20", tip:"Mit Gewicht"},
+      ]},
+    { label:"SO", name:"SONNTAG", focus:"Aktive Erholung", cardio:"Spazieren / leichtes Radfahren 45 Min", color:"#4DDFFF",
+      exercises:[
+        {name:"Mobility / Stretching", sets:"20 Min", tip:"Voller Körper"},
+        {name:"Foam Rolling", sets:"10 Min", tip:"Beine & Rücken"},
+        {name:"Kein schweres Training", sets:"—", tip:"Muskeln wachsen in der Ruhe"},
+      ]},
+  ];
+
+  const foods = [
+    { category:"PROTEIN QUELLEN", icon:"🥩", color:"#FF4D4D",
+      items:[
+        {name:"Hähnchenbrust", g:"200g", kcal:"220", pro:"46g"},
+        {name:"Magerquark", g:"300g", kcal:"180", pro:"33g"},
+        {name:"Eier (4 Stk)", g:"240g", kcal:"280", pro:"28g"},
+        {name:"Lachs", g:"150g", kcal:"280", pro:"30g"},
+        {name:"Rinderhack (5%)", g:"200g", kcal:"240", pro:"42g"},
+        {name:"Thunfisch (Dose)", g:"200g", kcal:"180", pro:"44g"},
+      ]},
+    { category:"CARBS – TIMING", icon:"🍚", color:"#FFB84D", note:"⚡ Carbs VOR & NACH Training",
+      items:[
+        {name:"Haferflocken", g:"80g trocken", kcal:"290", pro:"10g"},
+        {name:"Reis (gekocht)", g:"200g", kcal:"260", pro:"5g"},
+        {name:"Kartoffeln", g:"300g", kcal:"240", pro:"6g"},
+        {name:"Süßkartoffel", g:"200g", kcal:"172", pro:"3g"},
+        {name:"Vollkornbrot", g:"2 Scheiben", kcal:"160", pro:"7g"},
+      ]},
+    { category:"FETTE (GESUND)", icon:"🥑", color:"#4DFF91", note:"Fette ABENDS besser als Carbs",
+      items:[
+        {name:"Avocado", g:"½ Stk", kcal:"120", pro:"1g"},
+        {name:"Olivenöl", g:"1 EL", kcal:"120", pro:"0g"},
+        {name:"Nüsse (Mandeln)", g:"30g", kcal:"170", pro:"6g"},
+        {name:"Erdnussbutter", g:"2 EL", kcal:"190", pro:"8g"},
+      ]},
+    { category:"GEMÜSE – IMMER OK", icon:"🥦", color:"#4D9FFF", note:"Volumen ohne Kalorien – immer essen!",
+      items:[
+        {name:"Brokkoli", g:"unlimitiert", kcal:"~30", pro:"3g/100g"},
+        {name:"Spinat", g:"unlimitiert", kcal:"~20", pro:"2g/100g"},
+        {name:"Gurke / Paprika", g:"unlimitiert", kcal:"~25", pro:"1g/100g"},
+        {name:"Zucchini", g:"unlimitiert", kcal:"~17", pro:"1g/100g"},
+      ]},
+  ];
+
+  const meals = [
+    { time:"🌅 FRÜHSTÜCK", kcal:"~500–600 kcal",
+      options:["Haferflocken + Magerquark + Beeren","4 Eier (Rührei) + Vollkornbrot + Spinat","Protein-Pancakes aus Haferflocken + Ei + Quark"]},
+    { time:"⚡ PRE-WORKOUT", kcal:"~500–600 kcal",
+      options:["Reis + Hähnchen + Brokkoli","Kartoffeln + Rinderhack + Zucchini","Haferflocken + Ei"]},
+    { time:"💪 POST-WORKOUT", kcal:"~400–500 kcal",
+      options:["Protein-Shake + Banane + Haferflocken","Magerquark + Honig + Mandeln","Hähnchen + Reis + Gemüse"]},
+    { time:"🌙 ABENDS", kcal:"~500–600 kcal",
+      options:["Lachs + Süßkartoffel + Salat","Rinderhack + Brokkoli + Avocado","Thunfisch + Eier + Gemüse (Low Carb)"]},
+  ];
+
+  const rules = [
+    {icon:"💧", text:"3–4L Wasser täglich"},
+    {icon:"🚫", text:"Kein Alkohol"},
+    {icon:"🚫", text:"Kein Zucker"},
+    {icon:"😴", text:"8h Schlaf"},
+    {icon:"🥩", text:"160–180g Protein"},
+    {icon:"🔥", text:"2200–2500 kcal"},
+    {icon:"⏰", text:"Carbs vor/nach Training"},
+    {icon:"📊", text:"Gewicht checken"},
+  ];
+
+  // ---- STATE ----
+  let today = getTodayKey();
+  let selectedDay = new Date().getDay(); // 0=Sun, adjust to 0=Mon
+  // Convert JS day (0=Sun) to our index (0=Mon)
+  let dayIdx = ((selectedDay + 6) % 7);
+  let state = {}; // loaded from Firebase
+
+  function getTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  // ---- FIREBASE ----
+  function syncStatus(s) {
+    const dot = document.getElementById('syncDot');
+    const txt = document.getElementById('syncStatus');
+    if(s==='ok') { dot.className='sync-dot ok'; txt.textContent='Synced ✓'; txt.style.color='#4DFF91'; }
+    else if(s==='err') { dot.className='sync-dot err'; txt.textContent='Sync Fehler'; txt.style.color='#FF4D4D'; }
+    else { dot.className='sync-dot loading'; txt.textContent='Synchronisiere...'; txt.style.color='#FFB84D'; }
+  }
+
+  async function loadState() {
+    syncStatus('loading');
+    try {
+      const snap = await get(ref(db, `masterplan/${today}`));
+      if(snap.exists()) {
+        state = snap.val();
+      } else {
+        state = { exercises:{}, cardio:false, food:{}, meals:{}, rules:{} };
+      }
+      syncStatus('ok');
+    } catch(e) {
+      console.error(e);
+      state = { exercises:{}, cardio:false, food:{}, meals:{}, rules:{} };
+      syncStatus('err');
+    }
+    renderAll();
+  }
+
+  async function saveState() {
+    syncStatus('loading');
+    try {
+      await set(ref(db, `masterplan/${today}`), state);
+      syncStatus('ok');
+    } catch(e) {
+      console.error(e);
+      syncStatus('err');
+    }
+  }
+
+  async function saveWeight() {
+    const val = parseFloat(document.getElementById('weightInput').value);
+    if(!val || val < 30 || val > 300) { showToast('❌ Ungültiges Gewicht'); return; }
+    syncStatus('loading');
+    try {
+      await set(ref(db, `weights/${today}`), { kg: val, date: today });
+      document.getElementById('weightInput').value = '';
+      loadWeightHistory();
+      syncStatus('ok');
+      showToast(`✓ ${val} kg gespeichert`);
+      document.getElementById('currentWeightDisplay').textContent = val + 'kg';
+      document.getElementById('currentWeightDisplay').style.color = val < 110 ? '#4DFF91' : '#FFB84D';
+    } catch(e) {
+      console.error(e);
+      syncStatus('err');
+    }
+  }
+  window.saveWeight = saveWeight;
+
+  async function loadWeightHistory() {
+    try {
+      const snap = await get(ref(db, 'weights'));
+      const el = document.getElementById('weightHistory');
+      if(!snap.exists()) { el.innerHTML = '<div style="color:#555;text-align:center;padding:20px;">Noch keine Einträge</div>'; return; }
+      const entries = Object.values(snap.val()).sort((a,b) => b.date.localeCompare(a.date)).slice(0,10);
+      el.innerHTML = entries.map(e => `
+        <div class="weight-entry">
+          <span style="color:#888;">${e.date}</span>
+          <span style="color:#FFB84D;font-family:'Bebas Neue',sans-serif;font-size:18px;">${e.kg} kg</span>
+        </div>`).join('');
+      if(entries.length > 0) {
+        const latest = entries[0].kg;
+        document.getElementById('currentWeightDisplay').textContent = latest + 'kg';
+        document.getElementById('currentWeightDisplay').style.color = latest < 110 ? '#4DFF91' : '#FFB84D';
+      }
+    } catch(e) {}
+  }
+
+  // ---- RENDER ----
+  function renderAll() {
+    renderDayBtns();
+    renderTraining();
+    renderFood();
+    renderMeals();
+    renderRules();
+  }
+
+  function renderDayBtns() {
+    const c = document.getElementById('dayBtns');
+    c.innerHTML = days.map((d,i) => `
+      <button class="day-btn ${i===dayIdx?'active':''}" onclick="selectDay(${i})" id="dayBtn${i}" style="${i===dayIdx?`background:${d.color};color:#000;border-color:${d.color}`:''}">
+        <div class="dot"></div>
+        <span>${d.label}</span>
+        <span style="font-size:9px;">${i===dayIdx?'HEUTE':''}</span>
+      </button>`).join('');
+  }
+
+  function renderTraining() {
+    const d = days[dayIdx];
+    // Card border color
+    document.getElementById('trainingCard').style.borderLeftColor = d.color;
+    document.getElementById('dayName').textContent = d.name;
+    document.getElementById('dayName').style.color = d.color;
+    document.getElementById('dayFocus').textContent = d.focus;
+    document.getElementById('cardioInfo').innerHTML = `<span style="color:${d.color}">🏃</span> ${d.cardio}`;
+    document.getElementById('cardioInfo').style.color = d.color + 'cc';
+
+    // Cardio toggle
+    const cardioDone = (state.exercises||{})[`cardio_${dayIdx}`] || false;
+    const cardioToggle = document.getElementById('cardioToggle');
+    const cardioCircle = document.getElementById('cardioCircle');
+    cardioToggle.className = `cardio-toggle ${cardioDone ? 'done' : ''}`;
+    cardioCircle.innerHTML = cardioDone ? '✓' : '🏃';
+    cardioCircle.style.color = cardioDone ? '#000' : '#fff';
+    cardioCircle.style.background = cardioDone ? '#4DFF91' : '';
+    cardioCircle.style.borderColor = cardioDone ? '#4DFF91' : '#333';
+
+    // Exercises
+    const exEl = document.getElementById('exerciseList');
+    exEl.innerHTML = d.exercises.map((ex,i) => {
+      const key = `ex_${dayIdx}_${i}`;
+      const done = (state.exercises||{})[key] || false;
+      return `<div class="exercise-row ${done?'done':''}" onclick="toggleExercise(${i})" id="exRow${i}">
+        <div class="ex-num" style="background:${done?d.color+'33':'#1a1a24'};color:${done?d.color:'#666'}">${i+1}</div>
+        <div class="ex-info">
+          <div class="ex-name" style="color:${done?d.color:'#fff'}">${ex.name}</div>
+          <div class="ex-tip">${ex.tip}</div>
+        </div>
+        <div class="ex-sets" style="color:${d.color}">${ex.sets}</div>
+        <div class="ex-check">${done?'✓':''}</div>
+      </div>`;
+    }).join('');
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const d = days[dayIdx];
+    const total = d.exercises.length;
+    let done = 0;
+    for(let i=0;i<total;i++) {
+      if((state.exercises||{})[`ex_${dayIdx}_${i}`]) done++;
+    }
+    const pct = total ? Math.round(done/total*100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${done} / ${total} Übungen erledigt`;
+  }
+
+  function renderFood() {
+    const grid = document.getElementById('foodGrid');
+    grid.innerHTML = foods.map((cat,ci) => {
+      const items = cat.items.map((item,ii) => {
+        const key = `food_${ci}_${ii}`;
+        const eaten = (state.food||{})[key] || false;
+        return `<div class="food-item ${eaten?'eaten':''}" onclick="toggleFood(${ci},${ii})" id="foodItem${ci}_${ii}">
+          <div class="food-item-left">
+            <div class="food-name"><span class="food-check-icon">${eaten?'✓':'○'}</span>${item.name}</div>
+            <div class="food-portion">${item.g}</div>
+          </div>
+          <div class="food-item-right">
+            <div class="food-kcal">${item.kcal} kcal</div>
+            <div class="food-pro" style="color:${cat.color}cc">${item.pro} P</div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="food-card" style="border-top-color:${cat.color}">
+        <div class="food-cat" style="color:${cat.color}">${cat.icon} ${cat.category}</div>
+        ${items}
+        ${cat.note ? `<div class="food-note" style="color:${cat.color}">${cat.note}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function renderMeals() {
+    const el = document.getElementById('mealList');
+    el.innerHTML = meals.map((m,mi) => {
+      const opts = m.options.map((opt,oi) => {
+        const key = `meal_${mi}_${oi}`;
+        const sel = (state.meals||{})[key] || false;
+        return `<div class="meal-option ${sel?'selected':''}" onclick="toggleMeal(${mi},${oi})" id="mealOpt${mi}_${oi}">
+          <div class="opt-dot"></div>
+          <span>${opt}</span>
+        </div>`;
+      }).join('');
+      return `<div class="meal-row">
+        <div class="meal-time">${m.time}<br><span class="meal-kcal">${m.kcal}</span></div>
+        <div class="meal-options">${opts}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderRules() {
+    const el = document.getElementById('rulesList');
+    let doneCount = 0;
+    el.innerHTML = rules.map((r,i) => {
+      const done = (state.rules||{})[`rule_${i}`] || false;
+      if(done) doneCount++;
+      return `<div class="rule-pill ${done?'done':''}" onclick="toggleRule(${i})" id="rulePill${i}">
+        ${r.icon} ${done?'✓ ':''}${r.text}
+      </div>`;
+    }).join('');
+    document.getElementById('ruleCount').textContent = doneCount;
+  }
+
+  // ---- TOGGLES ----
+  window.toggleExercise = function(i) {
+    const key = `ex_${dayIdx}_${i}`;
+    if(!state.exercises) state.exercises = {};
+    state.exercises[key] = !state.exercises[key];
+    renderTraining();
+    saveState();
+    showToast(state.exercises[key] ? '💪 Übung erledigt!' : '↩ Rückgängig');
+  };
+
+  window.toggleCardio = function() {
+    const key = `cardio_${dayIdx}`;
+    if(!state.exercises) state.exercises = {};
+    state.exercises[key] = !state.exercises[key];
+    renderTraining();
+    saveState();
+    showToast(state.exercises[key] ? '🏃 Cardio ✓ Gut gemacht!' : '↩ Cardio rückgängig');
+  };
+
+  window.toggleFood = function(ci, ii) {
+    const key = `food_${ci}_${ii}`;
+    if(!state.food) state.food = {};
+    state.food[key] = !state.food[key];
+    renderFood();
+    saveState();
+  };
+
+  window.toggleMeal = function(mi, oi) {
+    const key = `meal_${mi}_${oi}`;
+    if(!state.meals) state.meals = {};
+    state.meals[key] = !state.meals[key];
+    renderMeals();
+    saveState();
+  };
+
+  window.toggleRule = function(i) {
+    const key = `rule_${i}`;
+    if(!state.rules) state.rules = {};
+    state.rules[key] = !state.rules[key];
+    renderRules();
+    saveState();
+    if(state.rules[key]) showToast('⚡ Regel eingehalten!');
+  };
+
+  window.selectDay = function(i) {
+    dayIdx = i;
+    renderDayBtns();
+    renderTraining();
+  };
+
+  // ---- TABS ----
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = '';
+      b.style.color = '';
+      b.style.borderColor = '';
+    });
+    document.getElementById('page-' + tab).classList.add('active');
+    const tabColors = { training:'#FF4D4D', food:'#4DFF91', timing:'#FFB84D', rules:'#C84DFF', weight:'#4D9FFF' };
+    const btn = document.getElementById('tab-' + tab);
+    btn.classList.add('active');
+    btn.style.background = tabColors[tab];
+    btn.style.color = '#000';
+    btn.style.borderColor = tabColors[tab];
+  };
+
+  // ---- TOAST ----
+  window.showToast = function(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  };
+
+  // ---- DATE ----
+  function setDate() {
+    const d = new Date();
+    const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    document.getElementById('currentDate').textContent = d.toLocaleDateString('de-DE', opts).toUpperCase();
+  }
+
+  // ---- INIT ----
+  setDate();
+  loadState();
+  loadWeightHistory();
+</script>
+</body>
+</html>
